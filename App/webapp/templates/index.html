@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<div class="container">
+  <form action="{{ url_for('search') }}" method="get">
+    <div class="row">
+      <div class="col" style="max-width: 260px;">
+        <label for="geneset">Gene set database</label>
+        <select id="geneset" name="geneset">
+          {% for gs in genesets %}
+            <option value="{{ gs.id }}">{{ gs.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col">
+        <label for="gene">Search gene (EntrezID, Symbol, or GeneTitle)</label>
+        <input type="text" id="gene" name="gene" placeholder="e.g., TP53 or 7157 or tumor protein p53" list="gene_options" autocomplete="off" required />
+        <datalist id="gene_options"></datalist>
+        <input type="hidden" id="entrez" name="entrez" />
+        <input type="hidden" id="symbol" name="symbol" />
+        <input type="hidden" id="genetitle" name="genetitle" />
+      </div>
+      <div class="col" style="max-width: 220px;">
+        <label for="threshold">Threshold (|loading| > x)</label>
+        <input type="number" id="threshold" name="threshold" value="{{ default_threshold }}" step="0.1" />
+      </div>
+      <div class="col" style="flex:0 0 auto;">
+        <button type="submit">Search</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+  const geneInput = document.getElementById('gene');
+  const datalist = document.getElementById('gene_options');
+  const entrez = document.getElementById('entrez');
+  const symbol = document.getElementById('symbol');
+  const genetitle = document.getElementById('genetitle');
+  let lastItems = [];
+  let timer;
+
+  geneInput.addEventListener('input', function(){
+    const q = geneInput.value.trim();
+    entrez.value = '';
+    symbol.value = '';
+    genetitle.value = '';
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!q) { datalist.innerHTML = ''; lastItems = []; return; }
+      try {
+        const res = await fetch(`{{ url_for('api_gene_suggest') }}?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        lastItems = data.items || [];
+        datalist.innerHTML = '';
+        for (const it of lastItems) {
+          const opt = document.createElement('option');
+          opt.value = it.label;
+          datalist.appendChild(opt);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }, 200);
+  });
+
+  geneInput.addEventListener('change', function(){
+    const val = geneInput.value.trim();
+    const hit = lastItems.find(it => it.label === val);
+    if (hit) {
+      entrez.value = hit.entrez || '';
+      symbol.value = hit.symbol || '';
+      genetitle.value = hit.genetitle || '';
+      geneInput.value = hit.label; // show all three
+    }
+  });
+})();
+</script>
+{% endblock %}

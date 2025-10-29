@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Results for {{ gene_display or gene }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <form action="{{ url_for('search') }}" method="get">
+        <label for="gene">Gene</label>
+        <input type="text" id="gene" name="gene" value="{{ gene_display or gene }}" list="gene_options" autocomplete="off" />
+        <datalist id="gene_options"></datalist>
+        <input type="hidden" id="entrez" name="entrez" value="{{ entrez }}" />
+        <input type="hidden" id="symbol" name="symbol" value="{{ gene }}" />
+        <input type="hidden" id="genetitle" name="genetitle" value="{{ genetitle }}" />
+        <label for="threshold">Threshold</label>
+        <input type="number" id="threshold" name="threshold" value="{{ '%.2f'|format(threshold) }}" step="0.1" />
+        <button type="submit">Update</button>
+        <a class="button" href="{{ url_for('index') }}">New search</a>
+        <a class="button" href="{{ url_for('api_find_ic', symbol=gene, entrez=entrez, genetitle=genetitle, threshold=threshold) }}" target="_blank">Export JSON</a>
+      </form>
+      <div class="muted" style="margin-top:0.5rem;">
+        Selected geneset: {{ geneset }}
+      </div>
+    </div>
+  </div>
+
+  {% if error %}
+    <div class="error" style="margin-top:1rem;">{{ error }}</div>
+  {% else %}
+    {% if not records %}
+      <p class="muted">No strong IC associations found.</p>
+    {% else %}
+  <h3>Related ICs for {{ gene_display or gene }}</h3>
+      <div class="grid">
+        {% for rec in records %}
+          <div class="card">
+            <h4 style="margin-top:0;">IC: {{ rec.IC }}</h4>
+            <div class="muted">Loading: {{ '%.3f'|format(rec.Loading) }}</div>
+            {% if rec.Top_Pathways %}
+              <h5>Top pathways</h5>
+              <div class="scroll-x">
+                <table>
+                  <thead>
+                    <tr><th>Pathway</th><th>Score</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for k, v in rec.Top_Pathways.items() %}
+                      <tr><td>{{ k }}</td><td>{{ '%.3f'|format(v) }}</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="muted">No pathway hits at this threshold.</p>
+            {% endif %}
+            {% if rec.Top_Samples %}
+              <h5>Top samples</h5>
+              <div class="scroll-x">
+                <table>
+                  <thead>
+                    <tr>
+                      {% for k in rec.Top_Samples[0].keys() %}
+                        <th>{{ k }}</th>
+                      {% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in rec.Top_Samples %}
+                      <tr>
+                        {% for v in row.values() %}
+                          <td>{{ v }}</td>
+                        {% endfor %}
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
+<script>
+(function(){
+  const geneInput = document.getElementById('gene');
+  const datalist = document.getElementById('gene_options');
+  const entrez = document.getElementById('entrez');
+  const symbol = document.getElementById('symbol');
+  const genetitle = document.getElementById('genetitle');
+  let lastItems = [];
+  let timer;
+
+  geneInput.addEventListener('input', function(){
+    const q = geneInput.value.trim();
+    entrez.value = '';
+    symbol.value = '';
+    genetitle.value = '';
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!q) { datalist.innerHTML = ''; lastItems = []; return; }
+      try {
+        const res = await fetch(`{{ url_for('api_gene_suggest') }}?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        lastItems = data.items || [];
+        datalist.innerHTML = '';
+        for (const it of lastItems) {
+          const opt = document.createElement('option');
+          opt.value = it.label;
+          datalist.appendChild(opt);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }, 200);
+  });
+
+  geneInput.addEventListener('change', function(){
+    const val = geneInput.value.trim();
+    const hit = lastItems.find(it => it.label === val);
+    if (hit) {
+      entrez.value = hit.entrez || '';
+      symbol.value = hit.symbol || '';
+      genetitle.value = hit.genetitle || '';
+      geneInput.value = hit.label; // show all three
+    }
+  });
+})();
+</script>
