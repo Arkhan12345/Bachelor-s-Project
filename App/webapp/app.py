@@ -16,7 +16,7 @@ APP_DIR = THIS_DIR.parent
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from pipeline import find_related_ic, DEFAULT_THRESHOLD, genes
+from pipeline import find_ic, genes
 
 # Flask app setup
 app = Flask(__name__, template_folder=str(THIS_DIR / "templates"), static_folder=str(THIS_DIR / "static"))
@@ -27,15 +27,15 @@ GENESET_DATABASES = [
 ]
 
 
-def _resolve_gene(gene_query: Optional[str] = None,
+def _find_gene(gene_query: Optional[str] = None,
                   entrez: Optional[str] = None,
                   symbol: Optional[str] = None,
                   genetitle: Optional[str] = None):
-    """Resolve a gene selection to a canonical mapping row.
+    """Gene selection from mapping. Parse inputs with multiple variations.
+    Supports combined labels like "SYMBOL (1234) — TITLE".
     Returns tuple (row_dict or None, display_str)
     """
     df = genes.copy()
-    # Normalize
     def _to_str(x):
         return str(x) if x is not None else None
 
@@ -45,19 +45,19 @@ def _resolve_gene(gene_query: Optional[str] = None,
     gene_query = _to_str(gene_query)
 
     row = None
-    # Try to parse a combined label like "SYMBOL (1234) — TITLE" or "SYMBOL (1234) - TITLE"
+    # Try to parse a combined label like "SYMBOL (1234) — TITLE"
     if gene_query and not entrez and not symbol and not genetitle:
-        m = re.match(r"^\s*([^()\s]+)\s*\((\d+)\)\s*[\u2014\-]\s*(.+)$", gene_query)
-        if m:
-            symbol = m.group(1)
-            entrez = m.group(2)
-            genetitle = m.group(3)
+        match = re.match(r"^\s*([^()\s]+)\s*\((\d+)\)\s*[\u2014\-]\s*(.+)$", gene_query)
+        if match:
+            symbol = match.group(1)
+            entrez = match.group(2)
+            genetitle = match.group(3)
         else:
-            # Also support just "SYMBOL (1234)"
-            m2 = re.match(r"^\s*([^()\s]+)\s*\((\d+)\)\s*$", gene_query)
-            if m2:
-                symbol = m2.group(1)
-                entrez = m2.group(2)
+            # Just "SYMBOL (1234)"
+            match2 = re.match(r"^\s*([^()\s]+)\s*\((\d+)\)\s*$", gene_query)
+            if match2:
+                symbol = match2.group(1)
+                entrez = match2.group(2)
 
     # 1) Prefer explicit ENTREZID
     if entrez:
@@ -109,12 +109,14 @@ def _resolve_gene(gene_query: Optional[str] = None,
     return row_dict, display
 
 
+# Render home page
 @app.route("/")
 def index():
-    return render_template("index.html", default_threshold=DEFAULT_THRESHOLD, genesets=GENESET_DATABASES)
+    return render_template("index.html", default_threshold=3, genesets=GENESET_DATABASES)
 
 
-@app.route("/search", methods=["GET"])  # allow GET so it's linkable/bookmarkable
+# Render search results page
+@app.route("/search", methods=["GET"])  # GET so it's linkable
 def search():
     # geneset database (future use)
     geneset = request.args.get("geneset", type=str, default="gsea_default")
@@ -123,23 +125,23 @@ def search():
     entrez = request.args.get("entrez", type=str)
     symbol = request.args.get("symbol", type=str)
     genetitle = request.args.get("genetitle", type=str)
-    threshold = request.args.get("threshold", default=DEFAULT_THRESHOLD)
+    threshold = request.args.get("threshold", default=3)
     try:
         threshold = float(threshold)
     except Exception:
-        threshold = DEFAULT_THRESHOLD
+        threshold = 3
 
     # Resolve gene
-    row, display = _resolve_gene(gene_query, entrez, symbol, genetitle)
+    row, display = _find_gene(gene_query, entrez, symbol, genetitle)
     if row is None:
         # If empty, redirect back to home
         return redirect(url_for("index"))
 
     # Use symbol for the pipeline function (keeps current behavior)
-    result = find_related_ic(row["SYMBOL"], threshold=threshold)
-    # find_related_ic returns either a string (error) or a list of dicts
+    result = find_ic(row["SYMBOL"], threshold=threshold)
     error: Optional[str] = None
     records: List[Dict[str, Any]] = []
+
     if isinstance(result, str):
         error = result
     else:
@@ -158,29 +160,30 @@ def search():
     )
 
 
+# API endpoint for dynamic IC fetching
 @app.route("/api/find_ic")
 def api_find_ic():
-    # allow search by resolved fields too
     gene_query = request.args.get("gene", type=str, default="").strip()
     entrez = request.args.get("entrez", type=str)
     symbol = request.args.get("symbol", type=str)
     genetitle = request.args.get("genetitle", type=str)
-    threshold = request.args.get("threshold", default=DEFAULT_THRESHOLD)
+    threshold = request.args.get("threshold", default=3)
     try:
         threshold = float(threshold)
     except Exception:
-        threshold = DEFAULT_THRESHOLD
+        threshold = 3
 
-    row, display = _resolve_gene(gene_query, entrez, symbol, genetitle)
+    row, display = _find_gene(gene_query, entrez, symbol, genetitle)
     if row is None:
         return jsonify({"error": "Gene not found"}), 404
 
-    result = find_related_ic(row["SYMBOL"], threshold=threshold)
+    result = find_ic(row["SYMBOL"], threshold=threshold)
     if isinstance(result, str):
         return jsonify({"error": result}), 404
     return jsonify({"gene": row, "display": display, "threshold": threshold, "data": result})
 
 
+# Autocomplete gene suggestions
 @app.route("/api/gene_suggest")
 def api_gene_suggest():
     q = request.args.get("q", type=str, default="").strip()
