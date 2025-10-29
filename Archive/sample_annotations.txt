@@ -1,0 +1,374 @@
+Type	Subtype	Stage	Substage	Grade	Age	Platinum	Taxol	Neo.adjuvant	PFS	OS	Survival.status	Recurrence.status	Debulking	OS.binary	PFS.binary	Type_updated
+GSM249714	Serous	LMP	2	C	1	59	0	0	0	1128.5	1128.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249715	Serous	LMP	2	A	1	26	0	0	0	244	244	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249716	Serous	LMP	3	A	1	64	0	0	0	549	549	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249717	Serous	LMP	3	C	1	49	0	0	0	915	915	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249718	Serous	LMP	1	A	1	46	0	0	0	30.5	30.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249719	Serous	LMP	1	A	1	22	0	0	0	152.5	152.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249720	Serous	LMP	1	C	2	52	0	0	0	701.5	701.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249721	Serous	LMP	1	A	3	46	0	0	0	671	671	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249722	Serous	LMP	2	B	1	51	0	0	0	396.5	396.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249723	Serous	LMP	1	A	1	79	0	0	0	1281	1281	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249725	Serous	LMP	2	A	1	47	0	0	0	1342	1342	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249726	Serous	LMP	3	A	3	52	0	0	0	1403	1403	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249727	Serous	LMP	3	C	2	40	0	0	0	1189.5	1189.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249728	Serous	LMP	3	B	3	72	0	0	0	1098	1098	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249729	Serous	LMP	1	A	3	49	0	0	0	427	427	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249731	Serous	LMP	1	A	3	61	0	0	0	1342	1342	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249734	Serous	HGSOC	3	A	3	43	1	0	0	0	0	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249736	Serous	HGSOC	3	C	3	79	1	0	0	427	1067.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249738	Serous	HGSOC	3	C	3	63	1	0	0	1738.5	3233	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249739	Serous	HGSOC	3	C	3	63	1	0	0	610	1281	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249740	Serous	HGSOC	3	C	3	63	1	0	0	61	61	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249741	Serous	HGSOC	3	C	3	54	1	0	0	3111	3385.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249744	Serous	HGSOC	2	C	3	71	1	0	0	823.5	823.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249745	Serous	HGSOC	3	C	3	52	1	0	0	396.5	2104.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249746	Serous	HGSOC	3	C	3	57	1	0	0	1525	2226.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249749	Serous	HGSOC	3	B	3	58	1	0	0	427	732	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249750	Serous	HGSOC	4	NA	3	53	1	0	0	396.5	793	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249751	Serous	HGSOC	3	C	3	76	1	0	0	1342	1769	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249752	Serous	HGSOC	3	C	3	68	1	0	0	213.5	396.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249753	Serous	LGSOC	2	C	1	40	1	0	0	488	6527	Alive	Recurrence	Optimal	0	1	Serous carcinoma - low grade
+GSM249754	Serous	HGSOC	3	B	3	80	1	0	0	671	671	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249755	Serous	HGSOC	3	C	3	62	1	1	0	NA	823.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249756	Serous	HGSOC	3	C	2	62	1	1	0	549	701.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249759	Serous	HGSOC	3	C	3	70	1	1	0	305	701.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249764	Serous	HGSOC	3	C	3	68	1	1	0	884.5	884.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249766	Serous	HGSOC	3	C	3	52	1	1	0	457.5	1067.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249767	Serous	HGSOC	3	C	3	54	1	1	0	427	823.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249768	Serous	HGSOC	4	NA	2	72	1	1	1	213.5	854	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249769	Serous	HGSOC	3	C	3	59	1	1	0	335.5	610	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249770	Serous	HGSOC	3	C	3	50	1	1	0	854	1311.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249771	Serous	HGSOC	3	C	3	58	1	1	0	396.5	1403	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249773	Serous	HGSOC	3	B	3	75	1	1	0	1494.5	1494.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249774	Serous	HGSOC	3	C	3	59	1	1	0	549	1281	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249775	Serous	HGSOC	3	C	3	64	1	1	0	427	1220	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249776	Serous	HGSOC	3	B	3	53	1	1	0	732	1342	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249777	Serous	HGSOC	3	C	3	77	1	1	0	183	183	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249778	Serous	HGSOC	3	C	2	73	0	0	0	366	366	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249779	Endometrioid	Endometrioid	1	A	1	51	1	1	0	1342	1342	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM249780	Serous	HGSOC	3	C	2	64	1	1	0	457.5	1006.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249781	Serous	HGSOC	4	NA	3	55	1	1	0	884.5	884.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249782	Serous	HGSOC	3	C	3	73	1	1	0	335.5	762.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249783	Serous	HGSOC	1	C	3	56	0	0	0	244	244	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249784	Serous	HGSOC	3	C	2	60	1	1	0	610	610	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249785	Serous	HGSOC	3	C	3	68	1	1	0	854	854	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249786	Serous	HGSOC	3	C	3	55	1	1	0	335.5	610	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249788	Serous	HGSOC	1	C	3	53	1	1	0	1006.5	1006.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249789	Serous	HGSOC	3	C	3	52	1	1	1	1037	1037	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249791	Endometrioid	Endometrioid	3	C	3	47	1	1	0	335.5	701.5	Alive	Recurrence	Suboptimal	0	1	Endometrioid carcinoma
+GSM249792	Serous	HGSOC	1	C	2	64	1	1	0	1372.5	1372.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249793	Serous	HGSOC	2	B	3	50	1	1	0	1342	1342	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249795	Serous	HGSOC	3	C	3	56	0	0	0	274.5	274.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249796	Serous	HGSOC	3	C	3	79	1	1	0	122	366	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249797	Serous	HGSOC	4	NA	2	40	1	1	0	488	1403	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249798	Serous	HGSOC	3	C	2	52	1	1	0	884.5	1494.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249799	Serous	HGSOC	3	C	2	69	1	1	0	518.5	945.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249800	Serous	HGSOC	3	C	3	75	1	1	0	244	244	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249801	Serous	HGSOC	3	C	2	77	1	1	0	488	549	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249802	Serous	HGSOC	3	C	2	52	1	1	0	793	1037	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249803	Serous	HGSOC	3	A	2	73	1	1	0	NA	549	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249804	Serous	HGSOC	3	B	2	55	1	1	0	610	1220	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249805	Serous	HGSOC	4	NA	3	80	1	0	0	244	488	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249806	Serous	HGSOC	3	C	3	71	1	1	0	213.5	701.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249807	Serous	HGSOC	3	C	2	66	1	1	0	305	366	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249808	Serous	HGSOC	1	A	3	52	1	1	0	1403	1403	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249809	Serous	HGSOC	3	C	3	66	1	1	0	1555.5	1555.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249810	Serous	HGSOC	3	NA	2	50	1	1	0	366	1525	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249811	Serous	HGSOC	3	A	2	39	1	1	0	1311.5	1555.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249812	Serous	HGSOC	3	C	2	77	1	0	0	427	671	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249813	Serous	HGSOC	3	C	3	59	1	1	0	1586	1586	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249814	Serous	HGSOC	3	C	3	67	1	1	0	640.5	1677.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249815	Serous	HGSOC	3	C	2	64	1	1	0	701.5	1342	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249816	Serous	HGSOC	3	C	2	71	1	0	0	122	152.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249817	Serous	HGSOC	3	C	2	23	1	1	0	366	579.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249818	Serous	HGSOC	3	C	3	71	1	0	0	91.5	244	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249819	Serous	HGSOC	3	C	2	53	1	1	0	305	610	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249820	Serous	HGSOC	3	C	3	58	1	1	0	305	305	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249821	Serous	HGSOC	3	C	2	72	1	1	0	274.5	274.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249822	Serous	HGSOC	3	C	3	37	1	1	0	396.5	762.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249823	Serous	HGSOC	3	C	2	51	1	1	0	1982.5	1982.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249824	Serous	HGSOC	3	B	2	70	1	1	0	518.5	518.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249825	Serous	HGSOC	3	C	3	73	1	1	0	244	518.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249826	Serous	HGSOC	3	A	2	55	1	1	0	549	549	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249827	Serous	HGSOC	3	NA	3	57	1	0	1	396.5	1159	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249828	Serous	HGSOC	3	C	3	57	1	1	0	457.5	1067.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249829	Serous	HGSOC	3	C	3	61	1	1	0	213.5	396.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249830	Serous	HGSOC	3	C	3	65	1	1	0	427	976	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249831	Serous	HGSOC	3	C	3	64	1	1	0	183	762.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249832	Serous	HGSOC	3	C	2	53	1	1	0	457.5	457.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249833	Serous	HGSOC	3	C	3	56	1	1	0	1250.5	1250.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249834	Serous	HGSOC	3	C	2	75	1	0	0	152.5	152.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249835	Serous	HGSOC	4	NA	3	66	1	1	0	457.5	1067.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249836	Serous	HGSOC	3	C	3	56	1	1	0	2196	2196	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249837	Serous	HGSOC	3	C	3	47	1	1	1	579.5	1982.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249838	Serous	HGSOC	3	C	3	38	1	1	0	640.5	1860.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249839	Serous	HGSOC	3	NA	3	56	1	0	0	213.5	244	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249840	Serous	HGSOC	3	C	2	57	1	1	0	488	1159	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249841	Serous	HGSOC	3	C	2	48	1	1	0	518.5	1738.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249842	Serous	HGSOC	3	C	2	59	1	1	0	915	2409.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249843	Serous	HGSOC	3	C	3	59	1	1	0	640.5	1372.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249844	Serous	HGSOC	3	NA	3	62	1	1	0	823.5	2074	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249845	Serous	HGSOC	3	C	3	58	1	0	0	305	793	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249846	Serous	HGSOC	3	C	2	70	1	1	0	274.5	1006.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249847	Serous	HGSOC	3	C	2	63	1	1	0	610	1525	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249848	Serous	HGSOC	4	NA	2	49	1	0	0	335.5	823.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249849	Serous	HGSOC	3	C	2	58	1	1	0	152.5	183	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249850	Serous	HGSOC	1	C	2	62	1	1	0	335.5	823.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249852	Serous	HGSOC	3	C	3	74	1	0	0	366	1006.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249853	Serous	LGSOC	3	C	1	52	1	1	0	823.5	1586	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - low grade
+GSM249855	Serous	HGSOC	3	C	3	70	1	1	0	366	640.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249857	Serous	HGSOC	3	C	3	56	1	1	0	610	1067.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249858	Serous	HGSOC	4	NA	3	61	1	1	1	396.5	640.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249859	Serous	HGSOC	4	NA	2	60	1	1	0	213.5	427	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249860	Serous	HGSOC	3	C	2	46	1	1	0	122	335.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249861	Serous	HGSOC	3	C	2	62	1	1	0	305	1067.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249863	Serous	HGSOC	3	C	3	57	1	1	0	274.5	854	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249864	Serous	HGSOC	4	NA	3	64	1	1	0	213.5	366	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249865	Serous	HGSOC	2	C	2	59	1	1	0	335.5	1311.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249866	Serous	HGSOC	3	C	3	49	1	1	0	457.5	1128.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249867	Serous	HGSOC	3	C	3	61	1	1	0	305	518.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249869	Serous	LGSOC	1	B	1	75	0	0	0	1464	1464	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249870	Endometrioid	Endometrioid	1	C	2	53	1	1	0	1494.5	1494.5	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM249871	Serous	HGSOC	3	C	3	65	1	1	0	976	1311.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249872	Serous	HGSOC	3	C	3	48	1	1	0	335.5	640.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249873	Serous	HGSOC	4	NA	2	60	1	1	1	610	1555.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249874	Serous	HGSOC	1	C	2	63	1	1	0	1372.5	1372.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249875	Serous	HGSOC	3	C	3	68	1	1	0	488	1159	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249877	Serous	HGSOC	3	C	3	60	1	1	0	579.5	1616.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249878	Endometrioid	Endometrioid	3	C	3	47	1	0	0	762.5	1647	Alive	Recurrence	Optimal	0	1	Endometrioid carcinoma
+GSM249880	Serous	HGSOC	3	B	2	57	1	1	0	1342	1677.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249882	Serous	LGSOC	3	C	1	59	1	1	0	274.5	2104.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - low grade
+GSM249883	Serous	HGSOC	3	B	2	73	1	0	0	0	0	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249885	Serous	HGSOC	3	C	2	52	1	1	0	335.5	762.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249886	Endometrioid	Endometrioid	3	C	3	59	1	1	0	640.5	640.5	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM249887	Serous	HGSOC	3	C	3	54	1	1	0	152.5	488	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249888	Serous	HGSOC	3	C	3	44	1	1	0	396.5	884.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249889	Serous	HGSOC	1	C	2	71	1	1	0	884.5	884.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249890	Serous	HGSOC	3	C	2	56	1	1	0	183	701.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249891	Serous	HGSOC	3	C	2	63	1	1	0	701.5	701.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249892	Endometrioid	Endometrioid	1	C	1	57	1	1	0	823.5	823.5	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM249893	Endometrioid	Endometrioid	3	C	3	77	1	0	0	274.5	640.5	Alive	Recurrence	Optimal	0	1	Endometrioid carcinoma
+GSM249894	Serous	HGSOC	3	C	2	76	1	0	0	793	793	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249895	Serous	HGSOC	4	NA	2	63	1	1	0	884.5	915	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249896	Serous	HGSOC	3	C	3	50	1	1	0	305	1067.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249897	Serous	HGSOC	3	C	2	53	1	1	0	701.5	884.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249898	Serous	HGSOC	3	C	2	54	1	1	0	823.5	1250.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249899	Serous	HGSOC	3	C	2	54	1	1	0	305	762.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249900	Serous	HGSOC	3	C	3	58	0	0	0	1372.5	1372.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249902	Serous	HGSOC	3	C	3	74	1	0	0	427	427	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249903	Serous	HGSOC	3	C	3	52	1	1	0	976	1860.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249904	Serous	HGSOC	3	C	2	67	1	1	0	396.5	1464	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249906	Serous	HGSOC	3	C	2	56	1	1	0	274.5	1342	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249907	Serous	HGSOC	3	C	3	53	1	1	0	1738.5	1738.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249910	Serous	LGSOC	3	C	1	52	0	0	0	701.5	701.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM249911	Serous	HGSOC	3	C	3	62	1	1	0	335.5	610	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249912	Serous	HGSOC	3	C	2	55	1	1	0	640.5	640.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249913	Serous	HGSOC	3	C	3	71	1	1	0	427	732	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249914	Serous	HGSOC	3	C	3	63	1	1	0	152.5	396.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249915	Serous	HGSOC	3	C	2	43	1	1	0	396.5	915	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249916	Serous	HGSOC	3	C	3	44	1	1	0	915	915	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249918	Serous	HGSOC	3	C	2	54	1	1	0	915	915	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249919	Serous	HGSOC	3	C	3	60	1	1	0	305	671	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249920	Serous	HGSOC	3	C	3	33	1	1	0	457.5	1128.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249921	Serous	HGSOC	3	C	3	70	1	1	0	305	732	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249922	Endometrioid	Endometrioid	1	B	3	57	1	1	0	976	976	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM249923	Serous	HGSOC	3	C	3	74	0	0	0	91.5	91.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249925	Serous	HGSOC	3	C	3	60	1	1	0	305	427	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249926	Serous	HGSOC	3	C	3	53	1	1	1	976	976	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249927	Serous	HGSOC	3	C	2	47	1	1	0	427	793	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249928	Serous	HGSOC	1	A	3	56	1	1	0	1220	1220	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249929	Serous	HGSOC	3	C	3	57	1	1	0	335.5	671	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249930	Serous	HGSOC	3	A	3	75	1	1	0	579.5	732	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249931	Serous	HGSOC	3	C	2	77	0	0	0	30.5	30.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249932	Serous	HGSOC	3	C	3	49	0	0	0	640.5	671	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249934	Serous	HGSOC	3	C	2	45	1	1	0	335.5	1098	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249935	Serous	HGSOC	3	C	3	57	1	0	0	335.5	884.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249936	Serous	HGSOC	3	A	3	69	1	1	0	1250.5	1250.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249937	Serous	HGSOC	3	C	3	58	1	1	0	335.5	335.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249938	Serous	HGSOC	2	C	3	60	1	1	0	1067.5	1067.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249939	Serous	HGSOC	3	C	3	68	1	1	0	976	1128.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249941	Serous	HGSOC	3	C	2	61	0	0	0	701.5	701.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249942	Serous	HGSOC	3	C	2	73	1	1	0	335.5	701.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249943	Serous	HGSOC	4	NA	2	55	1	0	0	183	396.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249944	Serous	HGSOC	3	C	2	72	0	1	1	183	945.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249945	Serous	HGSOC	3	C	3	67	1	1	1	122	549	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249946	Serous	LGSOC	3	C	1	58	1	1	1	61	335.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - low grade
+GSM249947	Serous	HGSOC	3	C	2	75	0	0	0	91.5	91.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249948	Serous	HGSOC	3	C	3	41	1	1	0	270	360	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249949	Serous	HGSOC	1	A	3	67	1	1	0	305	305	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249950	Serous	HGSOC	3	C	3	58	0	0	0	579.5	579.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249951	Serous	HGSOC	3	C	2	66	1	1	1	244	244	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249953	Serous	HGSOC	3	C	3	76	1	1	0	701.5	701.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249954	Serous	HGSOC	2	C	2	73	1	0	0	549	549	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249955	Endometrioid	Endometrioid	3	C	3	49	1	1	0	396.5	732	Alive	Recurrence	Optimal	0	1	Endometrioid carcinoma
+GSM249956	Serous	HGSOC	3	C	3	59	1	1	0	244	488	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249957	Serous	HGSOC	3	C	3	49	1	1	0	366	366	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249958	Serous	HGSOC	3	C	3	59	1	1	0	366	640.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249959	Serous	HGSOC	3	C	2	62	1	1	0	518.5	732	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249960	Serous	HGSOC	3	C	3	46	1	1	0	732	732	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249961	Serous	HGSOC	3	B	2	57	1	1	0	732	884.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249962	Serous	HGSOC	3	C	2	62	1	1	1	274.5	945.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249963	Serous	HGSOC	3	C	3	65	1	1	0	396.5	1037	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249965	Serous	HGSOC	3	C	3	78	1	1	0	335.5	335.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249966	Endometrioid	Endometrioid	3	B	2	49	1	1	0	1006.5	1006.5	Alive	Recurrence	Optimal	0	1	Endometrioid carcinoma
+GSM249967	Serous	HGSOC	2	C	2	77	1	0	0	1037	1037	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249968	Serous	HGSOC	3	B	3	59	1	1	0	671	854	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249969	Serous	HGSOC	3	C	3	58	1	1	0	213.5	1067.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249970	Serous	HGSOC	1	C	3	77	1	0	0	610	610	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249971	Serous	HGSOC	4	NA	2	48	1	1	1	305	732	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249972	Serous	HGSOC	3	C	3	57	1	1	0	457.5	945.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249973	Serous	HGSOC	3	C	3	73	1	1	0	640.5	1250.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249974	Endometrioid	Endometrioid	2	C	2	43	0	0	0	1311.5	1311.5	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM249975	Serous	HGSOC	3	C	3	67	1	1	0	579.5	1342	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249979	Serous	HGSOC	4	NA	3	45	1	1	0	213.5	274.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249980	Serous	HGSOC	3	C	2	60	1	1	0	701.5	701.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249981	Serous	HGSOC	2	C	2	70	1	1	0	1067.5	1067.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249982	Serous	HGSOC	3	C	3	45	1	1	0	274.5	671	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249983	Serous	HGSOC	3	C	3	71	1	1	0	305	427	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249984	Serous	HGSOC	3	C	2	78	1	0	0	244	518.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249985	Endometrioid	Endometrioid	3	C	2	58	1	1	0	1281	1281	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM249986	Serous	HGSOC	4	NA	3	58	1	1	0	549	579.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM249987	Serous	HGSOC	3	C	2	46	1	1	0	1250.5	1250.5	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249988	Serous	HGSOC	3	C	3	41	1	1	0	274.5	366	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249989	Serous	HGSOC	3	A	2	55	1	1	0	1433.5	1433.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249990	Serous	HGSOC	3	C	3	50	1	1	0	823.5	1311.5	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM249991	Serous	HGSOC	3	B	3	58	1	1	0	823.5	945.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249992	Serous	HGSOC	3	A	2	65	1	1	0	1006.5	1006.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM249993	Serous	HGSOC	2	C	3	43	1	1	0	1128.5	1128.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM249994	Serous	HGSOC	4	NA	2	63	1	1	1	335.5	457.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249995	Endometrioid	Endometrioid	2	C	2	56	1	1	0	915	1311.5	Alive	Recurrence	Optimal	0	1	Endometrioid carcinoma
+GSM249996	Serous	HGSOC	3	C	3	71	0	0	0	30.5	30.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249997	Serous	HGSOC	3	C	3	80	1	0	0	366	1311.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM249998	Serous	HGSOC	2	C	3	58	0	0	0	0	0	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM249999	Serous	HGSOC	3	C	2	49	1	0	0	549	2470.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM250000	Serous	HGSOC	3	NA	3	56	1	0	0	5063	5063	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM250001	Serous	HGSOC	3	C	3	65	1	0	0	213.5	457.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM495139	Serous	HGSOC	3	NA	3	56	1	1	0	183	549	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM495140	Serous	HGSOC	4	NA	3	48	1	1	0	610	1464	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM495141	Serous	HGSOC	3	NA	3	66	1	1	0	3507.5	3507.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM495142	Serous	HGSOC	3	NA	3	68	1	1	0	1220	3050	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM495143	Serous	HGSOC	3	NA	3	89	1	1	0	396.5	457.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM495145	Serous	HGSOC	3	NA	3	56	1	1	0	1647	1647	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM495146	Serous	HGSOC	3	NA	3	70	1	1	0	0	1006.5	Died	NA	Suboptimal	1	NA	Serous carcinoma - high grade
+GSM495147	Serous	HGSOC	3	NA	3	69	1	1	0	0	152.5	Died	NA	Optimal	1	NA	Serous carcinoma - high grade
+GSM495148	Serous	HGSOC	3	NA	3	64	1	1	0	579.5	1128.5	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM495149	Serous	HGSOC	3	NA	3	82	1	1	0	762.5	1647	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM495150	Serous	HGSOC	3	NA	3	74	1	1	0	1098	1921.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM495151	Serous	HGSOC	3	NA	3	61	1	1	0	0	549	Died	NA	Optimal	1	NA	Serous carcinoma - high grade
+GSM495152	Serous	HGSOC	3	NA	3	47	1	1	0	0	2196	Died	NA	Optimal	1	NA	Serous carcinoma - high grade
+GSM495153	Serous	HGSOC	3	NA	3	76	1	1	0	640.5	2196	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM495154	Serous	HGSOC	3	NA	3	68	1	1	0	0	305	Died	NA	Optimal	1	NA	Serous carcinoma - high grade
+GSM495155	Serous	HGSOC	4	NA	3	56	1	1	0	0	976	Died	NA	Optimal	1	NA	Serous carcinoma - high grade
+GSM495156	Serous	HGSOC	3	NA	3	71	1	1	0	518.5	1464	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM495157	Serous	HGSOC	2	NA	3	52	1	1	0	1921.5	1921.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM495158	Serous	HGSOC	3	NA	3	54	1	1	0	0	1250.5	Died	NA	Optimal	1	NA	Serous carcinoma - high grade
+GSM495159	Serous	HGSOC	3	NA	3	74	1	1	0	793	1372.5	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM495160	Serous	HGSOC	3	NA	3	50	1	1	0	518.5	884.5	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM495161	Serous	HGSOC	4	NA	3	51	1	1	0	610	610	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM495162	Serous	HGSOC	3	NA	3	53	1	1	0	305	427	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM495163	Serous	HGSOC	4	NA	3	56	1	1	0	1006.5	1006.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM495164	Serous	HGSOC	3	NA	3	71	1	1	0	3477	3477	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM495165	Serous	HGSOC	3	NA	3	71	1	1	0	396.5	976	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM495166	Serous	HGSOC	2	NA	3	61	1	1	0	274.5	274.5	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM516678	Serous	HGSOC	1	b	3	51.5	1	0	0	7380.957	7380.957	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM516679	Endometrioid	Endometrioid	2	b	2	44.6	1	0	0	3546.56995	3546.56995	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM516680	Serous	HGSOC	3	c	3	64.2	1	0	0	1126.2294	2206.48705	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516681	Serous	HGSOC	4	NA	3	50.8	1	0	0	655.55095	903.3823	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516683	Serous	HGSOC	3	c	3	53.7	1	0	0	571.60825	1541.9425	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516684	Serous	HGSOC	3	c	3	63.3	1	1	0	488.66565	859.41075	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516685	Serous	HGSOC	3	c	2	45.7	1	1	0	343.764665	776.46815	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516687	Serous	HGSOC	1	b	2	56.4	1	0	0	1736.8087	1736.8087	Died	No recurrence	Optimal	1	0	Serous carcinoma - high grade
+GSM516688	Serous	LGSOC	1	b	1	37.4	1	1	0	3317.7259	3317.7259	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM516689	Mucinous	Mucinous	3	c	3	68.9	1	1	0	647.55745	1080.2613	Died	Recurrence	Suboptimal	1	1	Mucinous carcinoma
+GSM516690	Serous	HGSOC	3	c	3	49	1	1	0	384.73555	991.32175	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516691	Serous	HGSOC	4	NA	3	45.2	1	1	0	1025.29595	1686.84385	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516694	Serous	HGSOC	2	b	3	57.3	1	1	0	1070.2676	1495.9744	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM516697	Serous	HGSOC	1	a	2	61.7	0	0	0	336.76944	539.6306	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516698	Serous	HGSOC	4	NA	3	78.1	1	0	0	1687.84395	1687.84395	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM516699	Serous	HGSOC	4	NA	3	37.5	1	0	0	1566.92675	1833.7454	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516700	Serous	LGSOC	4	NA	1	54.9	1	0	0	300.793945	615.5798	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - low grade
+GSM516702	Endometrioid	Endometrioid	3	c	3	50.5	1	0	0	323.77836	399.7261	Died	Recurrence	Suboptimal	1	1	Endometrioid carcinoma
+GSM516703	Mucinous	Mucinous	1	a	2	31.1	1	0	0	4458.9495	4458.9495	Alive	No recurrence	Optimal	0	0	Mucinous carcinoma
+GSM516704	Serous	HGSOC	3	c	3	75.5	1	0	0	1428.02235	4067.2315	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM516706	Serous	HGSOC	1	c	2	79.3	0	0	0	251.82737	251.82737	Died	No recurrence	Optimal	1	0	Serous carcinoma - high grade
+GSM516707	Serous	HGSOC	3	c	2	41.3	1	1	0	607.58265	674.53825	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516708	Serous	HGSOC	3	c	3	49	1	1	0	463.6814	1087.2547	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516709	Serous	HGSOC	3	c	3	64	1	1	0	555.62125	693.52555	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516710	Serous	HGSOC	3	c	3	54	1	1	0	676.5348	2990.95235	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM516711	OCCC	OCCC	3	b	2	54.3	1	1	0	307.78917	793.45525	Died	Recurrence	Suboptimal	1	1	Clear cell carcinoma
+GSM516712	Mucinous	Mucinous	1	a	1	43.1	0	0	0	2376.37265	2376.37265	Alive	No recurrence	Optimal	0	0	Mucinous carcinoma
+GSM516715	Serous	HGSOC	3	c	3	52.2	1	0	0	521.6434	521.6434	Died	No recurrence	Suboptimal	1	0	Serous carcinoma - high grade
+GSM516720	Mucinous	Mucinous	1	c	2	62	0	0	0	712.51285	898.38545	Died	Recurrence	Optimal	1	1	Mucinous carcinoma
+GSM516721	OCCC	OCCC	1	c	3	53	0	0	0	3646.5033	3646.5033	Alive	No recurrence	Optimal	0	0	Clear cell carcinoma
+GSM516724	Serous	HGSOC	3	c	3	72.6	1	1	0	1448.00975	2480.30275	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516725	Serous	HGSOC	3	c	2	52.4	1	1	0	656.55105	1662.8597	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516726	Serous	HGSOC	4	NA	3	65.9	1	1	0	174.88026	305.79043	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516727	Serous	HGSOC	3	c	3	47.5	1	1	0	284.804755	905.37885	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM516728	Mucinous	Mucinous	1	c	2	65	1	1	0	2435.3311	2435.3311	Alive	No recurrence	Optimal	0	0	Mucinous carcinoma
+GSM516730	Serous	HGSOC	3	c	3	62.6	1	1	0	1712.8282	1712.8282	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM516731	Serous	HGSOC	2	b	2	80.5	0	0	0	566.6114	566.6114	Died	No recurrence	Optimal	1	0	Serous carcinoma - high grade
+GSM516733	Serous	HGSOC	1	b	3	46.3	1	0	0	416.7132	1388.04755	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM516734	Serous	HGSOC	3	c	2	39.3	1	0	0	850.41715	1415.032	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516739	Serous	HGSOC	3	c	2	56.2	1	0	0	442.69755	735.4969	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516742	Serous	HGSOC	3	c	2	76.1	1	1	0	3086.8853	3130.85685	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM516743	OCCC	OCCC	1	a	2	62.3	0	0	0	474.6752	2924.99685	Alive	Recurrence	Optimal	0	1	Clear cell carcinoma
+GSM516745	Serous	HGSOC	3	c	3	39.2	1	1	0	456.688	1233.15615	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516749	Serous	HGSOC	3	c	3	47.6	1	1	0	1049.2801	1832.7453	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM516750	Serous	HGSOC	3	b	2	57.1	1	0	0	716.5096	1034.2932	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516751	Mucinous	Mucinous	3	c	1	63.8	1	0	0	215.85224	630.5667	Died	Recurrence	Suboptimal	1	1	Mucinous carcinoma
+GSM516755	Serous	HGSOC	2	b	3	56	1	0	0	2300.42345	3391.67855	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM516756	OCCC	OCCC	4	NA	3	65.5	1	0	0	488.66565	509.6495	Died	Recurrence	Suboptimal	1	1	Clear cell carcinoma
+GSM516758	Serous	HGSOC	3	c	3	62	1	0	0	295.79746	578.6053	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516760	Serous	HGSOC	3	c	3	86.8	1	0	0	223.846835	285.804125	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516761	Serous	HGSOC	3	c	3	63.6	1	1	0	421.71005	787.46195	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516762	Serous	HGSOC	3	c	2	56.2	1	1	0	699.5225	2685.16265	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM516763	Serous	HGSOC	3	c	3	64.1	1	1	0	580.60185	1274.1274	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516764	OCCC	OCCC	2	a	2	56.5	1	1	0	171.88215	460.68475	Died	Recurrence	Optimal	1	1	Clear cell carcinoma
+GSM516765	Serous	HGSOC	3	c	3	73.8	1	1	0	512.6498	839.42335	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516767	Endometrioid	Endometrioid	2	a	1	56.4	1	0	0	1735.81225	1735.81225	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM516769	Endometrioid	Endometrioid	1	a	2	53	1	1	0	1912.69125	1912.69125	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM516770	Serous	HGSOC	4	NA	2	58.4	1	1	0	292.79935	571.60825	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516771	Serous	HGSOC	3	a	2	72.4	1	0	0	120.9172	282.80638	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516772	Serous	HGSOC	3	c	3	47.6	1	0	0	1448.00975	2231.4713	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516776	Serous	HGSOC	3	c	3	56.7	1	0	0	594.5923	685.53205	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516777	Serous	HGSOC	3	c	3	73.4	1	0	0	193.867195	193.867195	Died	No recurrence	Suboptimal	1	0	Serous carcinoma - high grade
+GSM516779	Serous	HGSOC	4	NA	3	70.7	0	0	0	2.99794575	2.99794575	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516780	Serous	HGSOC	1	c	3	48.1	1	1	0	2943.98415	3507.5989	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM516781	Endometrioid	Endometrioid	3	c	3	68.9	1	1	0	3386.6817	3386.6817	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM516782	Serous	HGSOC	3	c	3	58.7	1	1	0	578.6053	910.3757	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516783	Serous	HGSOC	3	c	3	45.1	1	1	0	895.38515	1095.2482	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516784	Serous	HGSOC	3	c	3	62.6	1	1	0	2832.06055	2832.06055	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM516785	OCCC	OCCC	1	a	2	58.7	0	0	0	2819.0702	2819.0702	Alive	No recurrence	Optimal	0	0	Clear cell carcinoma
+GSM516786	Serous	HGSOC	3	c	3	35.4	1	1	0	583.5985	1024.2995	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516787	Serous	HGSOC	3	a	3	70.8	1	1	0	2356.38525	2356.38525	Alive	No recurrence	Optimal	0	0	Serous carcinoma - high grade
+GSM516788	Mucinous	Mucinous	3	c	2	58.3	1	1	0	126.913055	184.87323	Died	Recurrence	Suboptimal	1	1	Mucinous carcinoma
+GSM516789	Serous	HGSOC	2	c	3	62.8	1	1	0	1481.98395	2138.535	Alive	Recurrence	Suboptimal	0	1	Serous carcinoma - high grade
+GSM516795	Serous	HGSOC	3	c	3	53.5	1	0	0	970.33425	1112.23895	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516797	Serous	HGSOC	3	c	3	53.5	1	0	0	572.60835	1135.223	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516798	Serous	HGSOC	3	c	3	65.3	1	1	0	284.804755	937.3565	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM516799	Serous	HGSOC	4	NA	3	61.3	1	1	0	537.6304	988.32145	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516801	Serous	HGSOC	4	NA	3	71.7	1	1	0	324.77773	480.67215	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516802	Serous	HGSOC	3	c	2	57.8	1	1	0	388.7323	843.42375	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516803	Serous	HGSOC	3	c	3	43.4	1	1	0	681.53165	1454.00305	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516804	Serous	HGSOC	4	NA	3	74.9	0	0	0	18.987008	18.987008	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516805	Serous	LGSOC	1	a	1	47.3	0	0	0	2046.5988	2046.5988	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM516806	Endometrioid	Endometrioid	1	a	2	62	0	0	0	2413.34715	2413.34715	Alive	No recurrence	Optimal	0	0	Endometrioid carcinoma
+GSM516808	Serous	HGSOC	4	NA	3	58.6	1	1	0	687.5286	970.33425	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM516811	Serous	HGSOC	2	a	3	65.5	0	0	0	282.80638	792.4588	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM516813	Serous	HGSOC	1	c	3	67.1	1	1	0	2126.54475	2126.54475	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM516814	Serous	HGSOC	3	c	3	65.7	1	1	0	724.5031	1392.04795	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM642949	Serous	HGSOC	4	NA	2	43.3	1	1	0	271.813675	271.813675	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM642950	Endometrioid	Endometrioid	3	c	3	70.9	1	0	0	529.6369	673.53815	Died	Recurrence	Suboptimal	1	1	Endometrioid carcinoma
+GSM642953	Serous	HGSOC	3	c	2	76.3	1	0	0	406.72315	884.395	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM642955	Serous	HGSOC	3	c	3	63.6	1	0	0	328.774845	661.5479	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM642964	Serous	HGSOC	3	c	3	44.9	1	1	0	553.62105	2284.43645	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM642967	Serous	HGSOC	1	a	2	54.2	1	0	0	1039.2864	1943.6688	Died	Recurrence	Optimal	1	1	Serous carcinoma - high grade
+GSM642968	Serous	HGSOC	3	c	3	58.1	1	0	0	3672.484	3672.484	Alive	No recurrence	Suboptimal	0	0	Serous carcinoma - high grade
+GSM642969	Serous	HGSOC	4	NA	2	76	1	0	0	417.7133	796.45555	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM642975	Mucinous	Mucinous	3	c	2	68.9	1	1	0	62.957025	92.9363	Died	Recurrence	Suboptimal	1	1	Mucinous carcinoma
+GSM642984	Serous	LGSOC	1	b	1	57.8	1	1	0	3756.434	3756.434	Alive	No recurrence	Optimal	0	0	Serous carcinoma - low grade
+GSM642987	Serous	HGSOC	1	a	3	54.3	1	1	0	2492.293	3042.9174	Alive	Recurrence	Optimal	0	1	Serous carcinoma - high grade
+GSM642988	Serous	HGSOC	3	b	3	57.1	1	1	0	745.4906	2784.09225	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM643015	Serous	HGSOC	3	c	3	70.5	1	1	0	528.6368	1391.04785	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade
+GSM643025	Serous	HGSOC	4	NA	2	66.4	1	1	0	431.70375	532.63355	Died	Recurrence	Suboptimal	1	1	Serous carcinoma - high grade

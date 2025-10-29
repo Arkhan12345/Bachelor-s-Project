@@ -1,0 +1,34 @@
+1st meeting
+
+underlying patter in transcript data(dna, rna, protein level)
+in the dna evrything is the same
+in the rna level changes- how does it change? specifically in cancer? depending on cancer type
+
+data: samples on column, genes rows
+components have weights on genes.
+how active are different components on samples(we know cancer type)?
+we also know analysis on patterns of the components
+
+framework that look up the hole framework that looks for patterns and then use llm to search for associated literature(if there is any, if not why not?)
+in the end website, user click bio of interest, click sample annotation and then the next tab publications appear.
+
+
+to-do work:
+understand the files and link them between each other.
+based on them and the provided abstract write a concise research question
+
+
+Research question:
+How effectively can LLMs automatically annotate Independent Component Analysis derived transcriptional components by linking them to relevant biological themes in scientific literature?
+
+Hypothesis:
+AI-powered literature mining can effectively reveal the biological functions underlying transcriptional components (TCs) derived from cancer transcriptomes.
+
+
+Linking files:
+Independent_components are the underlying statistically independent transcriptional components.
+Rows of this file are the genes. The description of the genes is present in genomic_mapping file.
+The geneset enrichment analysis of the components are saved inside the file gsea_matrix.csv.
+Mixing_matrix shows the activity scores of those components in the samples.
+The details about the samples are provided in the file sample_annotations.txt.
+

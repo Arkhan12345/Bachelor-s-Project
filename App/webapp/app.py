@@ -9,20 +9,21 @@ import pandas as pd
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
-# Ensure we can import the pipeline module from App/
+# Import the pipeline module
 import sys
 THIS_DIR = Path(__file__).resolve().parent
 APP_DIR = THIS_DIR.parent
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from pipeline import find_related_ic, DEFAULT_THRESHOLD, genes  # type: ignore
+from pipeline import find_related_ic, DEFAULT_THRESHOLD, genes
 
+# Flask app setup
 app = Flask(__name__, template_folder=str(THIS_DIR / "templates"), static_folder=str(THIS_DIR / "static"))
 
-# Placeholder list of gene set databases (expand later)
+# List of gene set databases
 GENESET_DATABASES = [
-    {"id": "gsea_default", "name": "GSEA (Default)"},
+    {"id": "gsea_default", "name": "GSEA"},
 ]
 
 
