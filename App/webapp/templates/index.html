@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
   <form action="{{ url_for('search') }}" method="get">
-    <div class="row">
+    <div class="row" align-items-center>
       <div class="col" style="max-width: 260px;">
         <label for="geneset">Gene set database</label>
         <select id="geneset" name="geneset">
@@ -12,7 +12,7 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col">
+      <div class="row" align-items-center>
         <label for="gene">Search gene (EntrezID, Symbol, or GeneTitle)</label>
         <input type="text" id="gene" name="gene" placeholder="e.g., TP53 or 7157 or tumor protein p53" list="gene_options" autocomplete="off" required />
         <datalist id="gene_options"></datalist>
@@ -20,12 +20,8 @@
         <input type="hidden" id="symbol" name="symbol" />
         <input type="hidden" id="genetitle" name="genetitle" />
       </div>
-      <div class="col" style="max-width: 220px;">
-        <label for="threshold">Threshold (|loading| > x)</label>
-        <input type="number" id="threshold" name="threshold" value="{{ default_threshold }}" step="0.1" />
-      </div>
-      <div class="col" style="flex:0 0 auto;">
-        <button type="submit">Search</button>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Search</button>
       </div>
     </div>
   </form>

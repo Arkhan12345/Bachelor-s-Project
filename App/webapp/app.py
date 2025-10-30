@@ -16,7 +16,7 @@ APP_DIR = THIS_DIR.parent
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from pipeline import find_ic, genes
+from pipeline import find_ic, find_pathway_ics, genes
 
 # Flask app setup
 app = Flask(__name__, template_folder=str(THIS_DIR / "templates"), static_folder=str(THIS_DIR / "static"))
@@ -154,6 +154,7 @@ def search():
         entrez=row["ENTREZID"],
         genetitle=row["GENETITLE"],
         geneset=geneset,
+        genesets=GENESET_DATABASES,
         threshold=threshold,
         error=error,
         records=records,
@@ -208,6 +209,35 @@ def api_gene_suggest():
         item["label"] = f"{item['symbol']} ({item['entrez']}) — {item['genetitle']}"
         items.append(item)
     return jsonify({"items": items})
+
+
+# Pathway-related ICs page
+@app.route("/pathway/<path:pathway_name>")
+def pathway_ics(pathway_name):
+    geneset = request.args.get("geneset", type=str, default="gsea_default")
+    threshold = request.args.get("threshold", default=3)
+    try:
+        threshold = float(threshold)
+    except Exception:
+        threshold = 3
+    
+    result = find_pathway_ics(pathway_name, threshold=threshold)
+    error: Optional[str] = None
+    records: List[Dict[str, Any]] = []
+    
+    if isinstance(result, str):
+        error = result
+    else:
+        records = result
+    
+    return render_template(
+        "pathway_results.html",
+        pathway=pathway_name,
+        geneset=geneset,
+        threshold=threshold,
+        error=error,
+        records=records,
+    )
 
 
 if __name__ == "__main__":

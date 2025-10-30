@@ -2,26 +2,36 @@
 {% block title %}Results for {{ gene_display or gene }}{% endblock %}
 {% block content %}
 <div class="container">
-  <div class="row">
-    <div class="col">
-      <form action="{{ url_for('search') }}" method="get">
+  <form action="{{ url_for('search') }}" method="get">
+    <div class="row">
+      <div class="col">
         <label for="gene">Gene</label>
         <input type="text" id="gene" name="gene" value="{{ gene_display or gene }}" list="gene_options" autocomplete="off" />
         <datalist id="gene_options"></datalist>
         <input type="hidden" id="entrez" name="entrez" value="{{ entrez }}" />
         <input type="hidden" id="symbol" name="symbol" value="{{ gene }}" />
         <input type="hidden" id="genetitle" name="genetitle" value="{{ genetitle }}" />
+      </div>
+      <div class="col" style="max-width: 150px; margin-left: 0.5rem;">
         <label for="threshold">Threshold</label>
         <input type="number" id="threshold" name="threshold" value="{{ '%.2f'|format(threshold) }}" step="0.1" />
+      </div>
+      <div class="col" style="flex: 0 0 auto; display: flex; gap: 0.5rem; align-items: flex-end; margin-left: 0.5rem;">
         <button type="submit">Update</button>
-        <a class="button" href="{{ url_for('index') }}">New search</a>
-        <a class="button" href="{{ url_for('api_find_ic', symbol=gene, entrez=entrez, genetitle=genetitle, threshold=threshold) }}" target="_blank">Export JSON</a>
-      </form>
-      <div class="muted" style="margin-top:0.5rem;">
-        Selected geneset: {{ geneset }}
+        <button type="submit" formaction="{{ url_for('index') }}">New search</button>
+        <button class="button" formaction="{{ url_for('api_find_ic', symbol=gene, entrez=entrez, genetitle=genetitle, threshold=threshold) }}" target="_blank">Export JSON</button>
       </div>
     </div>
-  </div>
+    <div class="col" style="max-width: 200px;">
+        <label for="geneset">Selected gene set:</label>
+        <select id="geneset" name="geneset">
+          {% for gs in genesets %}
+            <option value="{{ gs.id }}" {% if gs.id == geneset %}selected{% endif %}>{{ gs.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+  </form>
+
 
   {% if error %}
     <div class="error" style="margin-top:1rem;">{{ error }}</div>
@@ -30,9 +40,15 @@
       <p class="muted">No strong IC associations found.</p>
     {% else %}
   <h3>Related ICs for {{ gene_display or gene }}</h3>
-      <div class="grid">
+      
+      <!-- IC search/filter bar -->
+      <div style="margin-bottom: 1rem;">
+        <input type="text" id="ic_search" placeholder="Search ICs (e.g., IC39, IC43)..." style="max-width: 400px;" />
+      </div>
+
+      <div class="ic-list">
         {% for rec in records %}
-          <div class="card">
+          <div class="card ic-item" data-ic-name="{{ rec.IC }}" style="margin-bottom: 1rem;">
             <h4 style="margin-top:0;">IC: {{ rec.IC }}</h4>
             <div class="muted">Loading: {{ '%.3f'|format(rec.Loading) }}</div>
             {% if rec.Top_Pathways %}
@@ -40,11 +56,16 @@
               <div class="scroll-x">
                 <table>
                   <thead>
-                    <tr><th>Pathway</th><th>Score</th></tr>
+                    <th>Pathway</th><th>Description</th><th>MSigDB</th><th>Score</th>
                   </thead>
                   <tbody>
                     {% for k, v in rec.Top_Pathways.items() %}
-                      <tr><td>{{ k }}</td><td>{{ '%.3f'|format(v) }}</td></tr>
+                      <tr>
+                        <td><a href="{{ url_for('pathway_ics', pathway_name=k, threshold=threshold) }}">{{ k }}</a></td>
+                        <td class="muted">—</td>
+                        <td><a href="http://www.broadinstitute.org/gsea/msigdb/cards/{{ k }}" target="_blank" rel="noopener noreferrer">View</a></td>
+                        <td>{{ '%.3f'|format(v) }}</td>
+                      </tr>
                     {% endfor %}
                   </tbody>
                 </table>
@@ -125,6 +146,26 @@
       genetitle.value = hit.genetitle || '';
       geneInput.value = hit.label; // show all three
     }
+  });
+})();
+
+// IC search/filter functionality
+(function(){
+  const searchInput = document.getElementById('ic_search');
+  if (!searchInput) return;
+  
+  searchInput.addEventListener('input', function(){
+    const query = searchInput.value.trim().toLowerCase();
+    const items = document.querySelectorAll('.ic-item');
+    
+    items.forEach(function(item){
+      const icName = item.getAttribute('data-ic-name').toLowerCase();
+      if (!query || icName.includes(query)) {
+        item.style.display = '';
+      } else {
+        item.style.display = 'none';
+      }
+    });
   });
 })();
 </script>

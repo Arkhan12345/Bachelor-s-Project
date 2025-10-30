@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Results for {{ pathway }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="margin-bottom: 1rem;">
+    <a href="javascript:history.back()" style="color: #1976d2;">← Back to gene results</a>
+  </div>
+  
+  <h3>Related ICs for pathway: {{ pathway }}</h3>
+  
+  <div style="margin-bottom: 1rem;">
+    <a class="button" href="http://www.broadinstitute.org/gsea/msigdb/cards/{{ pathway }}" target="_blank" rel="noopener noreferrer">View in MSigDB</a>
+  </div>
+  
+  <div class="muted" style="margin-bottom: 1rem;">
+    Threshold: {{ '%.2f'|format(threshold) }} | Selected geneset: {{ geneset }}
+  </div>
+
+  {% if error %}
+    <div class="error" style="margin-top:1rem;">{{ error }}</div>
+  {% else %}
+    {% if not records %}
+      <p class="muted">No strong IC associations found for this pathway.</p>
+    {% else %}
+      <!-- IC search/filter bar -->
+      <div style="margin-bottom: 1rem;">
+        <input type="text" id="ic_search" placeholder="Search ICs..." style="max-width: 400px;" />
+      </div>
+
+      <div class="ic-list">
+        {% for rec in records %}
+          <div class="card ic-item" data-ic-name="{{ rec.IC }}" style="margin-bottom: 1rem;">
+            <h4 style="margin-top:0;">IC: {{ rec.IC }}</h4>
+            <div class="muted">Pathway Score: {{ '%.3f'|format(rec.Score) }}</div>
+            
+            {% if rec.Top_Genes %}
+              <h5>Top genes in this IC</h5>
+              <div class="scroll-x">
+                <table>
+                  <thead>
+                    <tr><th>Symbol</th><th>Gene Title</th><th>Loading</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for gene in rec.Top_Genes %}
+                      <tr>
+                        <td><a href="{{ url_for('search', gene=gene.SYMBOL, entrez=gene.ENTREZID, symbol=gene.SYMBOL, genetitle=gene.GENETITLE, threshold=threshold) }}">{{ gene.SYMBOL }}</a></td>
+                        <td>{{ gene.GENETITLE }}</td>
+                        <td>{{ '%.3f'|format(gene.Loading) }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="muted">No gene loadings found at this threshold.</p>
+            {% endif %}
+            
+            {% if rec.Top_Samples %}
+              <h5>Top samples</h5>
+              <div class="scroll-x">
+                <table>
+                  <thead>
+                    <tr>
+                      {% for k in rec.Top_Samples[0].keys() %}
+                        <th>{{ k }}</th>
+                      {% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in rec.Top_Samples %}
+                      <tr>
+                        {% for v in row.values() %}
+                          <td>{{ v }}</td>
+                        {% endfor %}
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script>
+// IC search/filter functionality
+(function(){
+  const searchInput = document.getElementById('ic_search');
+  if (!searchInput) return;
+  
+  searchInput.addEventListener('input', function(){
+    const query = searchInput.value.trim().toLowerCase();
+    const items = document.querySelectorAll('.ic-item');
+    
+    items.forEach(function(item){
+      const icName = item.getAttribute('data-ic-name').toLowerCase();
+      if (!query || icName.includes(query)) {
+        item.style.display = '';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

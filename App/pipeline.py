@@ -98,6 +98,71 @@ def find_ic(gene_symbol, threshold: float = 3):
 
     return results
 
+def find_pathway_ics(pathway_name, threshold: float = 3):
+    """Find ICs related to a specific pathway.
+    
+    Args:
+        pathway_name: the pathway name
+        threshold: value to consider a score "strong"
+    
+    Returns:
+        List of dicts with IC info, or error string
+    """
+    # Check if pathway exists in GSEA matrix
+    if pathway_name not in gsea.index:
+        return f"Pathway '{pathway_name}' not found in GSEA matrix"
+    
+    # Get the pathway's row and filter for strong IC associations
+    pathway_row = gsea.loc[pathway_name]
+    strong_ics = pathway_row[(pathway_row > threshold) | (pathway_row < -threshold)]
+    
+    if strong_ics.empty:
+        return f"No strong IC associations found for pathway {pathway_name}"
+    
+    # Sort by absolute value descending
+    strong_ics = strong_ics.reindex(strong_ics.abs().sort_values(ascending=False).index)
+    
+    results = []
+    
+    # Get filtered matrices for top genes and samples
+    ic_filtered = filter_ic(threshold)
+    mixing_filtered = filter_mixing_m(threshold)
+    
+    for ic_name in strong_ics.index:
+        # Top genes for this IC (genes with strong loadings)
+        if ic_name in ic_filtered.columns:
+            top_gene_loadings = ic_filtered[ic_name].dropna().sort_values(ascending=False, key=abs).head(10)
+            # Map entrez IDs to symbols
+            top_genes = []
+            for entrez_id in top_gene_loadings.index:
+                gene_info = genes[genes["ENTREZID"] == entrez_id]
+                if not gene_info.empty:
+                    top_genes.append({
+                        "ENTREZID": str(int(entrez_id)),
+                        "SYMBOL": str(gene_info.iloc[0]["SYMBOL"]),
+                        "GENETITLE": str(gene_info.iloc[0]["GENETITLE"]),
+                        "Loading": top_gene_loadings[entrez_id]
+                    })
+        else:
+            top_genes = []
+        
+        # Top samples for this IC
+        if ic_name in mixing_filtered.index:
+            active_samples = mixing_filtered.loc[ic_name].dropna().sort_values(ascending=False).head(10)
+        else:
+            active_samples = pd.Series(dtype=float)
+        
+        sample_meta = meta.loc[meta.index.isin(active_samples.index)]
+        
+        results.append({
+            "IC": ic_name,
+            "Score": strong_ics[ic_name],
+            "Top_Genes": top_genes,
+            "Top_Samples": sample_meta.to_dict(orient="records")
+        })
+    
+    return results
+
 gene_of_interest = "TP53"
 related_ics = find_ic(gene_of_interest)
 for ic_info in related_ics:
