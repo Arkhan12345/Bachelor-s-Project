@@ -16,7 +16,7 @@ APP_DIR = THIS_DIR.parent
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from pipeline import find_ic, find_pathway_ics, genes
+from pipeline import find_ic, find_pathway_ics, genes, generate_ic_enrichment_plot, generate_ic_sample_annotation_plots
 
 # Flask app setup
 app = Flask(__name__, template_folder=str(THIS_DIR / "templates"), static_folder=str(THIS_DIR / "static"))
@@ -237,6 +237,33 @@ def pathway_ics(pathway_name):
         threshold=threshold,
         error=error,
         records=records,
+    )
+
+
+# IC detail page with plots
+@app.route("/ic/<ic_name>")
+def ic_detail(ic_name):
+    threshold = request.args.get("threshold", default=3, type=float)
+    gene = request.args.get("gene", type=str)
+    
+    # Generate plots
+    enrichment_plot = generate_ic_enrichment_plot(ic_name, threshold)
+    annotation_plots = generate_ic_sample_annotation_plots(ic_name, threshold)
+    
+    print(f"\n=== FLASK DEBUG ===")
+    print(f"IC: {ic_name}, Threshold: {threshold}")
+    print(f"Enrichment plot exists: {enrichment_plot is not None}")
+    print(f"Annotation plots type: {type(annotation_plots)}")
+    print(f"Annotation plots: {annotation_plots.keys() if annotation_plots else 'empty/None'}")
+    print(f"=== END FLASK DEBUG ===\n")
+    
+    return render_template(
+        "ic_detail.html",
+        ic_name=ic_name,
+        threshold=threshold,
+        gene=gene,
+        enrichment_plot=enrichment_plot,
+        annotation_plots=annotation_plots,
     )
 
 

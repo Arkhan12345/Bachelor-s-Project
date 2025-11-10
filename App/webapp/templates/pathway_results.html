@@ -30,7 +30,12 @@
       <div class="ic-list">
         {% for rec in records %}
           <div class="card ic-item" data-ic-name="{{ rec.IC }}" style="margin-bottom: 1rem;">
-            <h4 style="margin-top:0;">IC: {{ rec.IC }}</h4>
+            <h4 style="margin-top:0;">
+              <a href="{{ url_for('ic_detail', ic_name=rec.IC, threshold=threshold) }}" style="color: #1976d2; text-decoration: none;">
+                IC: {{ rec.IC }}
+              </a>
+              <span class="muted" style="font-size: 0.85em; font-weight: normal;">(click to view plots)</span>
+            </h4>
             <div class="muted">Pathway Score: {{ '%.3f'|format(rec.Score) }}</div>
             
             {% if rec.Top_Genes %}

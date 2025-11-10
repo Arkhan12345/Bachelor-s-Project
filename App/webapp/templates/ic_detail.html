@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ ic_name }} Details{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="margin-bottom: 1rem;">
+    <a href="javascript:history.back()" style="color: #1976d2;">← Back</a>
+  </div>
+  
+  <h2>{{ ic_name }} - Detailed Analysis</h2>
+  
+  <div style="margin-bottom: 1rem;">
+    <span class="muted">Threshold: {{ '%.2f'|format(threshold) }}</span>
+    {% if gene %}
+      <span class="muted"> | Related to gene: {{ gene }}</span>
+    {% endif %}
+  </div>
+
+  <!-- Gene Enrichment Plot -->
+  {% if enrichment_plot %}
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-top: 0;">Pathway Enrichment</h3>
+      <div style="text-align: center;">
+        <img src="{{ enrichment_plot }}" alt="Gene Enrichment Plot" style="max-width: 100%; height: auto;" />
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-top: 0;">Pathway Enrichment</h3>
+      <p class="muted">No significant pathway enrichments found at this threshold, or matplotlib is not installed.</p>
+    </div>
+  {% endif %}
+
+  <!-- Sample Annotation Plots -->
+  {% if annotation_plots %}
+    <div class="card">
+      <h3 style="margin-top: 0;">Sample Annotations</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+        {% for plot_name, plot_data in annotation_plots.items() %}
+          <div style="text-align: center;">
+            <h4 style="text-transform: capitalize; margin-bottom: 0.5rem;">{{ plot_name.replace('_', ' ') }}</h4>
+            <img src="{{ plot_data }}" alt="{{ plot_name }}" style="max-width: 100%; height: auto;" />
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="card">
+      <h3 style="margin-top: 0;">Sample Annotations</h3>
+      <p class="muted">No sample annotation data available at this threshold, or matplotlib is not installed.</p>
+    </div>
+  {% endif %}
+
+  <div style="margin-top: 2rem; padding: 1rem; background: #f7f7f7; border-radius: 8px;">
+    <p class="muted" style="margin: 0; font-size: 0.9rem;">
+      <strong>Note:</strong> Plots are generated dynamically based on the current threshold. 
+      Enrichment plots show pathways with |score| > threshold. 
+      Sample annotation plots show distributions for samples with |activation| > threshold for this IC.
+    </p>
+  </div>
+</div>
+{% endblock %}
