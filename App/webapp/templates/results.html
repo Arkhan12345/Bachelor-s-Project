@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Results for {{ gene_display or gene }}{% endblock %}
 {% block content %}
+
 <div class="container">
   <form action="{{ url_for('search') }}" method="get">
     <div class="row">
@@ -31,6 +32,20 @@
         </select>
       </div>
   </form>
+
+  <!-- Publications panel -->
+  <div class="card" style="margin-top:1rem; margin-bottom:1rem; padding:0.75rem;">
+    <h4 style="margin-top:0;">Publications & LLM Summary</h4>
+    <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
+      <input type="number" id="pub_max" value="5" min="1" max="20" style="width:80px;" />
+      <button id="fetch_pubs_btn" class="button">Fetch publications & summarize</button>
+      <span id="pub_status" class="muted" style="margin-left:0.5rem;"></span>
+    </div>
+
+    <div id="publications_container">
+      <!-- Filled dynamically -->
+    </div>
+  </div>
 
 
   {% if error %}
@@ -172,5 +187,71 @@
       }
     });
   });
+})();
+
+// Publications UI
+(function(){
+  const fetchBtn = document.getElementById('fetch_pubs_btn');
+  const status = document.getElementById('pub_status');
+  const container = document.getElementById('publications_container');
+  const pubMax = document.getElementById('pub_max');
+
+  if (!fetchBtn) return;
+
+  fetchBtn.addEventListener('click', async function(e){
+    e.preventDefault();
+    const geneVal = document.getElementById('symbol').value || document.getElementById('gene').value || '';
+    try {
+      const max = parseInt(pubMax.value) || 5;
+      const res = await fetch(`/api/gene_publications?gene=${encodeURIComponent(geneVal)}&max=${max}`);
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        status.textContent = err.error || 'Failed to fetch publications';
+        return;
+      }
+      const data = await res.json();
+      status.textContent = '';
+      // render publications
+      const pubs = data.publications || [];
+      const summary = data.llm_summary || '';
+
+      const summaryEl = document.createElement('div');
+      summaryEl.innerHTML = `<h5>LLM Summary</h5><pre style="white-space:pre-wrap;">${escapeHtml(summary)}</pre>`;
+      container.appendChild(summaryEl);
+
+      const listEl = document.createElement('div');
+      listEl.innerHTML = `<h5>Publications (${pubs.length})</h5>`;
+      const ul = document.createElement('div');
+      ul.style.display = 'grid';
+      ul.style.gap = '0.5rem';
+
+      pubs.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const title = p.title || '(no title)';
+        const year = p.year || '';
+        const authors = p.authors || '';
+        const abs = p.abstract || '';
+        const url = p.url || p.doi ? (p.doi ? `https://doi.org/${p.doi}` : p.url) : '';
+        card.innerHTML = `<strong>${escapeHtml(title)}</strong> <span class="muted">(${escapeHtml(year)})</span><div class="muted">${escapeHtml(authors)}</div><div style="margin-top:0.5rem;">${escapeHtml(truncate(abs,400))}</div>${url?`<div style="margin-top:0.5rem;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View source</a></div>`:''}`;
+        ul.appendChild(card);
+      });
+      listEl.appendChild(ul);
+      container.appendChild(listEl);
+
+    } catch (err) {
+      status.textContent = 'Error fetching publications';
+      console.error(err);
+    }
+  });
+
+  // small helpers
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
+    });
+  }
+  function truncate(s, n){ if(!s) return ''; return s.length>n? s.slice(0,n)+'...':s; }
 })();
 </script>

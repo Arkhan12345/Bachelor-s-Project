@@ -195,7 +195,7 @@ def plot_to_base64(fig):
     return f"data:image/png;base64,{img_base64}"
 
 
-def generate_ic_enrichment_plot(ic_name, threshold: float = 3):
+def generate_ic_enrichment_plot(ic_name, threshold: float = 3): #param in webiste
     """Generate gene enrichment (GSEA) bar plot for a specific IC.
     
     Returns base64-encoded image string or None if matplotlib not available.

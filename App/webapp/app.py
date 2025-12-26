@@ -5,12 +5,17 @@ from pathlib import Path
 from typing import Any, Dict, List, Union, Optional
 import re
 
+
 import pandas as pd
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 # Import the pipeline module
 import sys
+
+import requests
+LLM_URL = "http://localhost:8000/generate"
+
 THIS_DIR = Path(__file__).resolve().parent
 APP_DIR = THIS_DIR.parent
 if str(APP_DIR) not in sys.path:
@@ -20,6 +25,9 @@ from pipeline import find_ic, find_pathway_ics, genes, generate_ic_enrichment_pl
 
 # Flask app setup
 app = Flask(__name__, template_folder=str(THIS_DIR / "templates"), static_folder=str(THIS_DIR / "static"))
+
+app.config['LLM_URL'] = LLM_URL
+app.jinja_env.globals['LLM_URL'] = LLM_URL
 
 # List of gene set databases
 GENESET_DATABASES = [
@@ -107,6 +115,66 @@ def _find_gene(gene_query: Optional[str] = None,
     }
     display = f"{row_dict['SYMBOL']} ({row_dict['ENTREZID']}) — {row_dict['GENETITLE']}"
     return row_dict, display
+
+
+def fetch_publications(query: str, max_results: int = 10):
+    url = "https://pubmed.ncbi.nlm.nih.gov/"
+    params = {
+        "query": query,
+        "format": "json",
+        "pageSize": max_results,
+        "sort": "date"
+    }
+    r = requests.get(url, params=params, timeout=15)
+    r.raise_for_status()
+    data = r.json()
+    results = []
+    for rec in data.get("resultList", {}).get("result", []):
+        # abstracts can be missing; prefer abstractText or abstract
+        abstract = rec.get("abstractText") or rec.get("abstract")
+        results.append({
+            "id": rec.get("id"),
+            "pmid": rec.get("pmid"),
+            "title": rec.get("title"),
+            "abstract": (abstract or "").strip(),
+            "authors": rec.get("authorString"),
+            "year": rec.get("pubYear"),
+            "source": rec.get("journalTitle"),
+            "doi": rec.get("doi"),
+            "url": rec.get("fullTextUrlList", {}).get("fullTextUrl", [{}])[0].get("url")
+        })
+    return results
+
+
+def summarize_publications(pub_list, max_papers_for_llm=5):
+    pubs_for_prompt = [p for p in pub_list if p.get("abstract")]
+    pubs_for_prompt = pubs_for_prompt[:max_papers_for_llm]
+
+    if not pubs_for_prompt:
+        return "No abstracts available to summarize."
+
+    prompt_parts = ["You are an expert biomedical summarizer. Given the following publications, produce:"]
+    prompt_parts.append("2) A short bullet list (one sentence each) summarizing each paper's main finding (include year and title).")
+    prompt_parts.append("Publications:")
+    for i, p in enumerate(pubs_for_prompt, start=1):
+        title = p.get("title", "")[:300]
+        year = p.get("year") or p.get("pubYear") or ""
+        abstract_snip = p.get("abstract", "")[:2000]
+        prompt_parts.append(f"{i}. Title: {title} ({year})")
+        prompt_parts.append(f"Abstract: {abstract_snip}")
+        prompt_parts.append("")
+
+    prompt = "\n".join(prompt_parts)
+
+    payload = {
+        "prompt": prompt,
+        "max_new_tokens": 400,
+        "temperature": 0.0,
+        "top_p": 0.9,
+    }
+    resp = requests.post(LLM_URL, json=payload, timeout=60)
+    resp.raise_for_status()
+    return resp.json().get("output", "")
 
 
 # Render home page
@@ -265,6 +333,28 @@ def ic_detail(ic_name):
         enrichment_plot=enrichment_plot,
         annotation_plots=annotation_plots,
     )
+
+
+@app.route("/api/gene_publications")
+def api_gene_publications():
+    gene = request.args.get("gene", type=str, default="").strip()
+    max_results = request.args.get("max", type=int, default=10)
+    if not gene:
+        return jsonify({"error": "Missing gene parameter"}), 400
+
+    query = f'{gene}'
+
+    try:
+        pubs = fetch_publications(query, max_results=max_results)
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch publications", "detail": str(e)}), 500
+
+    try:
+        llm_summary = summarize_publications(pubs, max_papers_for_llm=5)
+    except Exception as e:
+        llm_summary = f"LLM summary failed: {e}"
+
+    return jsonify({"gene": gene, "publications": pubs, "llm_summary": llm_summary})
 
 
 if __name__ == "__main__":

@@ -25,9 +25,28 @@
       </div>
     </div>
   </form>
+
+  <div id="chat-widget">
+    <button id="chat-toggle" aria-label="Open assistant">💬</button>
+
+    <div id="chat-panel" class="hidden">
+      <div id="chat-header">
+        <span>Assistant</span>
+        <button id="chat-close" aria-label="Close assistant">✕</button>
+      </div>
+
+      <div id="chat-messages"></div>
+
+      <form id="chat-form">
+        <input id="chat-input" type="text" placeholder="Ask something..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>
+src="{{ url_for('static', filename='chat.js') }}"
 (function(){
   const geneInput = document.getElementById('gene');
   const datalist = document.getElementById('gene_options');
