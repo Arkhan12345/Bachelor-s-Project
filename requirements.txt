@@ -7,3 +7,6 @@ transformers>=4.40.0
 accelerate>=0.20.0
 torch>=2.1.0
 bitsandbytes
+
+
+#pip install requirements.txt

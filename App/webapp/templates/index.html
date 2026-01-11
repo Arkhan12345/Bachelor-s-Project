@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
 <div class="container">
   <form action="{{ url_for('search') }}" method="get">
     <div class="row" align-items-center>
@@ -45,8 +46,8 @@
   </div>
 </div>
 
+<script src="{{ url_for('static', filename='chat.js') }}"></script>
 <script>
-src="{{ url_for('static', filename='chat.js') }}"
 (function(){
   const geneInput = document.getElementById('gene');
   const datalist = document.getElementById('gene_options');

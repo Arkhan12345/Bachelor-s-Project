@@ -217,7 +217,7 @@ def main():
 
     while True:
         #gene = input("Enter gene symbol: ").strip()
-        gene = "MYC"
+        gene = "MYC"    #example gene
         if gene.lower() == "quit":
             print("Bye!")
             break

@@ -335,6 +335,28 @@ def ic_detail(ic_name):
     )
 
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json() or {}
+    user_msg = data.get("message", "").strip()
+    if not user_msg:
+        return jsonify({"reply": "Please ask something."}), 400
+    
+    try:
+        payload = {
+            "prompt": user_msg,
+            "max_new_tokens": 200,
+            "temperature": 0.7,
+            "top_p": 0.9,
+        }
+        resp = requests.post(LLM_URL, json=payload, timeout=30)
+        resp.raise_for_status()
+        reply = resp.json().get("output", "No response from LLM.")
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"reply": f"Error: {str(e)}"}), 500
+
+
 @app.route("/api/gene_publications")
 def api_gene_publications():
     gene = request.args.get("gene", type=str, default="").strip()
@@ -359,4 +381,4 @@ def api_gene_publications():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)

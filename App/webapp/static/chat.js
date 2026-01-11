@@ -31,7 +31,6 @@ form.addEventListener("submit", async (e) => {
   addMessage(text, "user");
   input.value = "";
 
-  // simple typing indicator
   addMessage("...", "bot");
 
   try {
@@ -43,7 +42,6 @@ form.addEventListener("submit", async (e) => {
 
     const data = await resp.json();
 
-    // replace the "..." bubble with real reply
     messages.removeChild(messages.lastChild);
     addMessage(data.reply || "No reply.", "bot");
   } catch (err) {
