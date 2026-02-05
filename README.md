@@ -21,29 +21,43 @@ LLM/
 Archive/                # Reference data files
 ```
 
-## Setup
+### Setup Instructions
 
-### 1. Create/Activate Conda Environment
+### Step 1: Request GPU Resources (terminal 1)
 
-When first accesing Habrok, the conda module needs to be activated.
+```bash
+srun --gres=gpu:1 --mem=32G --cpus-per-task=4 --time=01:00:00 --pty bash
+```
+Adjust time as needed(hours:minutes:seconds).
+
+#### Step 2: Set up SSH Port Forwarding (terminal 2)
+
+Open a new terminal(from now on use this one) or use the local command prompt to connect with port forwarding:
+
+```bash
+ssh -L 5000:v100v2gpu17:5000 -L 8000:v100v2gpu17:8000 s5068290@interactive1.hb.hpc.rug.nl
+ssh -L 5000:interactive1:5000 -L 8000:interactive1:8000 s5068290@interactive1.hb.hpc.rug.nl
+```
+
+To close the connection:
+```bash
+exit
+```
+
+**Note:** Replace `v100v2gpu17` with your actual compute node name. You'll see it in your terminal prompt (e.g., `[s5068290@v100v2gpu17 ~]$`)
+Replace `s5068290` with the student/professor number used to login into habrok.
+`interactive1.hb.hpc.rug.nl` represents the login node, replace as needed.
+
+#### Step 3: Create/Activate Conda Environment + Install requirements
+
 ```bash
 module load Anaconda3
-```
-
-Now to create/activate an environment.
-```bash
 conda create -n biomistral_app python=3.11
-```
-
-```bash
 conda activate biomistral_app
 ```
 
-The module load and conda activate commands will have to be reused every time when restarting.
-
-### 2. Install Dependencies
-
-From the project root:
+The module load and conda activate(not create) commands will have to be reused every time when restarting.
+You will know it is active if you see (biomistral_app) before the path in the terminal.
 
 ```bash
 pip install -r requirements.txt
@@ -51,44 +65,49 @@ pip install -r requirements.txt
 
 This will install the libraries in your conda environment. One-time use.
 
-### 3. Request GPU Resources
+
+#### Step 4: Navigate to Project Root
+e.g.
+```bash
+cd ~/Bproj/Bachelor-s-Project/Bachelor-s-Project
+```
+
+Use `mkdir` command to create a new folder to save this in.
+`Bachelor-s-Project` is an example only. Change with the name of your created directory.
+
+#### Step 5: Start LLM Server
 
 ```bash
-srun --gres=gpu:1 --mem=32G --cpus-per-task=4 --time=01:00:00 --pty bash
+cd LLM
+python llm_server.py > llm_server.log 2>&1 &
 ```
 
-## Running the Application
-
-The app consists of two components: the **LLM Server** and the **Flask Web App**.
-Make sure you open new terminals for each server.
-
-### Terminal 1: Start the LLM Server
+#### Step 6: Start Flask Web App
 
 ```bash
-conda activate biomistral_demo
-python -u LLM/llm_server.py
+cd ../App/webapp
+python app.py > webapp.log 2>&1 &
 ```
 
-### Terminal 2: Start the Flask Web App
+#### Step 7: Verify Both Services are Running
 
 ```bash
-conda activate biomistral_demo
-python App/webapp/app.py
+tail webapp.log
 ```
 
-## Accessing the Application
-### Terminal 3: SSH Port Forwarding
-
-From your local machine, create an SSH tunnel:
-```bash
-ssh -L 5000:localhost:5000 s....@login-node-hostname
+You should see:
 ```
-s... refers to the student number used to login into habrok
-login-node-hostname should be replaced with the active habrok node you were allocated.
-It is found after your s/p number in the terminal after the "@".
-e.g:[s5068290@a100gpu2 Bachelor-s-Project]$ ssh -L 5000:localhost:5000 s5068290@a100gpu2
-
-Then access:
+* Running on http://...:5000
+* Running on http://...:5000
 ```
-http://localhost:5000
+
+#### Step 8: Access the Application
+
+Open a browser on your local machine and go to:
+```
+http://127.0.0.1:5000/
+```
+or
+```
+http://localhost:5000/
 ```

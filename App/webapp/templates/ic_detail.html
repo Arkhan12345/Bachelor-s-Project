@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ ic_name }} Details{% endblock %}
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
 <div class="container">
   <div style="margin-bottom: 1rem;">
     <a href="javascript:history.back()" style="color: #1976d2;">← Back</a>
@@ -13,6 +14,15 @@
     {% if gene %}
       <span class="muted"> | Related to gene: {{ gene }}</span>
     {% endif %}
+  </div>
+
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h3 style="margin-top: 0; margin-bottom: 0.75rem;">LLM Overall Judgement</h3>
+    <div id="llm-summary-text" class="muted" style="min-height: 3rem; white-space: pre-wrap;">Loading assistant judgement...</div>
+    <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <button type="button" id="llm-summary-retry" class="button">Retry summary</button>
+      <button type="button" id="chat-open" class="button" style="background: #0d47a1;">Continue chat</button>
+    </div>
   </div>
 
   <!-- Gene Enrichment Plot -->
@@ -57,5 +67,83 @@
       Sample annotation plots show distributions for samples with |activation| > threshold for this IC.
     </p>
   </div>
+
+  <div id="chat-widget" class="hidden">
+    <div id="chat-panel" class="hidden">
+      <div id="chat-header">
+        <span>Assistant</span>
+        <button id="chat-close" aria-label="Close assistant">✕</button>
+      </div>
+
+      <div id="chat-messages"></div>
+
+      <form id="chat-form">
+        <input id="chat-input" type="text" placeholder="Ask something..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
 </div>
+<script src="{{ url_for('static', filename='chat.js') }}"></script>
+<script>
+  // @ts-nocheck
+  (function(){
+    const summaryEl = document.getElementById('llm-summary-text');
+    const retryBtn = document.getElementById('llm-summary-retry');
+    const chatBtn = document.getElementById('chat-open');
+    const panel = document.getElementById('chat-panel');
+    const input = document.getElementById('chat-input');
+    const widget = document.getElementById('chat-widget');
+
+    // Ensure chat toggle is visible once JS loads
+    widget.classList.remove('hidden');
+
+    const ctx = {
+      icName: "{{ ic_name }}",
+      threshold: "{{ '%.2f'|format(threshold) }}",
+      gene: "{{ gene or '' }}",
+      hasEnrichment: {{ 'true' if enrichment_plot else 'false' }},
+      annotationNames: {{ annotation_plots.keys()|list|tojson if annotation_plots else '[]' }}
+    };
+
+    async function fetchSummary() {
+      summaryEl.textContent = 'Asking assistant...';
+      try {
+        const prompt = [
+          `Analyze this independent component analysis result:`,
+          `- Component: ${ctx.icName}`,
+          `- Threshold: ${ctx.threshold}`,
+          ctx.gene ? `- Related gene: ${ctx.gene}` : '',
+          `- Enrichment plot available: ${ctx.hasEnrichment ? 'yes' : 'no'}`,
+          `- Sample annotation plots: ${ctx.annotationNames.length ? ctx.annotationNames.join(', ') : 'none'}`,
+          '',
+          `Please provide a brief analysis in 4-6 bullet points covering:`,
+          `1. What biological pathway or process this component likely represents`,
+          `2. Key patterns observed in the sample annotations`,
+          `3. Overall significance and interpretation`,
+          '',
+          `Keep your response concise and scientific.`
+        ].filter(x => x !== '').join('\n');
+
+        const resp = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: prompt })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.reply || data.error || 'Request failed');
+        summaryEl.textContent = data.reply || 'No reply.';
+      } catch (err) {
+        summaryEl.textContent = `Error: ${err.message}`;
+      }
+    }
+
+    fetchSummary();
+    retryBtn.addEventListener('click', fetchSummary);
+    chatBtn.addEventListener('click', () => {
+      panel.classList.remove('hidden');
+      if (input) input.focus();
+    });
+  })();
+</script>
 {% endblock %}

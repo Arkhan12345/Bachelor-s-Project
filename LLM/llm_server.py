@@ -18,8 +18,10 @@ def generate():
     
     try:
         reply = biomistral_chat(tokenizer, model, device, prompt)
+        print(f"[DEBUG] Prompt length: {len(prompt)}, Reply length: {len(reply)}, Reply: '{reply[:100]}'")
         return jsonify({"output": reply})
     except Exception as e:
+        print(f"[ERROR] {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":

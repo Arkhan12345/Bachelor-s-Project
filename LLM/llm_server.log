@@ -1,0 +1,13 @@
+2026-02-05 01:48:21.822974: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Loading BioMistral model...
+Loading BioMistral model on cpu
+Model loaded!
+Starting LLM server on port 8000...
+ * Serving Flask app 'llm_server'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Running on http://10.5.0.240:8000
+Press CTRL+C to quit

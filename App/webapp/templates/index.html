@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
 <div class="container">
   <form action="{{ url_for('search') }}" method="get">
     <div class="row" align-items-center>
@@ -26,29 +25,9 @@
       </div>
     </div>
   </form>
-
-  <div id="chat-widget">
-    <button id="chat-toggle" aria-label="Open assistant">💬</button>
-
-    <div id="chat-panel" class="hidden">
-      <div id="chat-header">
-        <span>Assistant</span>
-        <button id="chat-close" aria-label="Close assistant">✕</button>
-      </div>
-
-      <div id="chat-messages"></div>
-
-      <form id="chat-form">
-        <input id="chat-input" type="text" placeholder="Ask something..." autocomplete="off" />
-        <button type="submit">Send</button>
-      </form>
-    </div>
-  </div>
 </div>
-
-<script src="{{ url_for('static', filename='chat.js') }}"></script>
 <script>
-(function(){
+ (function(){
   const geneInput = document.getElementById('gene');
   const datalist = document.getElementById('gene_options');
   const entrez = document.getElementById('entrez');
