@@ -17,7 +17,8 @@ def generate():
         return jsonify({"error": "Missing prompt"}), 400
     
     try:
-        reply = biomistral_chat(tokenizer, model, device, prompt)
+        reply = biomistral_chat(tokenizer, model, device, prompt, max_new_tokens=max_new_tokens)
+
         print(f"[DEBUG] Prompt length: {len(prompt)}, Reply length: {len(reply)}, Reply: '{reply[:100]}'")
         return jsonify({"output": reply})
     except Exception as e:

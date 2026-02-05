@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Union, Optional
 import re
 
-
+import uuid
 import pandas as pd
 
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for, session
 
 # Import the pipeline module
 import sys
@@ -25,6 +25,9 @@ from pipeline import find_ic, find_pathway_ics, genes, generate_ic_enrichment_pl
 
 # Flask app setup
 app = Flask(__name__, template_folder=str(THIS_DIR / "templates"), static_folder=str(THIS_DIR / "static"))
+
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
+CHAT_HISTORY_MAX_TURNS = int(os.environ.get("CHAT_HISTORY_MAX_TURNS", "20"))
 
 app.config['LLM_URL'] = LLM_URL
 app.jinja_env.globals['LLM_URL'] = LLM_URL
@@ -349,7 +352,7 @@ def chat():
             "temperature": 0.7,
             "top_p": 0.9,
         }
-        resp = requests.post(LLM_URL, json=payload, timeout=30)
+        resp = requests.post(LLM_URL, json=payload, timeout=120)
         resp.raise_for_status()
         reply = resp.json().get("output", "No response from LLM.")
         return jsonify({"reply": reply})

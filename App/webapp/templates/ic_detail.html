@@ -25,6 +25,22 @@
     </div>
   </div>
 
+  <div id="chat-widget">
+    <div id="chat-panel" class="hidden">
+      <div id="chat-header">
+        <span>Assistant</span>
+        <button id="chat-close" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div id="chat-messages"></div>
+
+      <form id="chat-form">
+        <input id="chat-input" type="text" placeholder="Ask something..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Gene Enrichment Plot -->
   {% if enrichment_plot %}
     <div class="card" style="margin-bottom: 1.5rem;">
@@ -59,30 +75,6 @@
       <p class="muted">No sample annotation data available at this threshold, or matplotlib is not installed.</p>
     </div>
   {% endif %}
-
-  <div style="margin-top: 2rem; padding: 1rem; background: #f7f7f7; border-radius: 8px;">
-    <p class="muted" style="margin: 0; font-size: 0.9rem;">
-      <strong>Note:</strong> Plots are generated dynamically based on the current threshold. 
-      Enrichment plots show pathways with |score| > threshold. 
-      Sample annotation plots show distributions for samples with |activation| > threshold for this IC.
-    </p>
-  </div>
-
-  <div id="chat-widget" class="hidden">
-    <div id="chat-panel" class="hidden">
-      <div id="chat-header">
-        <span>Assistant</span>
-        <button id="chat-close" aria-label="Close assistant">✕</button>
-      </div>
-
-      <div id="chat-messages"></div>
-
-      <form id="chat-form">
-        <input id="chat-input" type="text" placeholder="Ask something..." autocomplete="off" />
-        <button type="submit">Send</button>
-      </form>
-    </div>
-  </div>
 </div>
 <script src="{{ url_for('static', filename='chat.js') }}"></script>
 <script>
@@ -140,10 +132,6 @@
 
     fetchSummary();
     retryBtn.addEventListener('click', fetchSummary);
-    chatBtn.addEventListener('click', () => {
-      panel.classList.remove('hidden');
-      if (input) input.focus();
-    });
   })();
 </script>
 {% endblock %}

@@ -115,35 +115,38 @@ def load_model():   #common pattern to load model
     return tokenizer, model, device
 
 
-def biomistral_chat(tokenizer, model, device, question: str) -> str:
+def biomistral_chat(tokenizer, model, device, prompt: str, max_new_tokens: int = 200) -> str:
     system_prompt = (
         "You are a medical research assistant. "
-        "You explain medical concepts in simple language for learning.\n"
-        "You MUST NOT give diagnoses, treatment plans, or personal medical advice.\n\n"
+        "Explain concepts clearly. Do not provide diagnosis or personal medical advice."
     )
 
-    prompt = system_prompt + f"Question: {question}\nAnswer:"
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=4096).to(device)
+    """     system_prompt = (
+    "You are a biomedical research assistant.\n"
+    "You are interpreting Independent Component Analysis (ICA) results "
+    "from gene expression data.\n"
+    "Explain biological meaning of components and pathways clearly.\n"
+    "Do NOT diagnose or give medical advice."
+    ) """
 
-    with torch.no_grad():   #inference, no training
-        start = time.time()
+
+    full_prompt = f"{system_prompt}\n\nUser:\n{prompt}\n\nAssistant:\n"
+
+    inputs = tokenizer(full_prompt, return_tensors="pt", truncation=True, max_length=4096).to(device)
+
+    with torch.no_grad():
         output_ids = model.generate(
             **inputs,
-            max_new_tokens=512,
+            max_new_tokens=max_new_tokens,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
             eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id,
         )
-        end = time.time()
-        print(f"Generated in {end - start:.2f} seconds.")
 
-    #decode and strip the original prompt so it only shows the answer part
-    new_tokens = output_ids[0, inputs['input_ids'].shape[1]:]
-    full_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
-    return full_text
-
+    new_tokens = output_ids[0, inputs["input_ids"].shape[1]:]
+    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
 def summarize_per_article(
     tokenizer,
@@ -169,7 +172,8 @@ def summarize_per_article(
         "- Any limitations or uncertainty\n"
         "Rules: Use ONLY the abstract. Do not invent details."
     )
-    return biomistral_chat(tokenizer, model, device, question)
+    return biomistral_chat(tokenizer, model, device, question, max_new_tokens=200)
+
 
 
 def judge_gene_research(
@@ -206,7 +210,8 @@ def judge_gene_research(
         "Rules: Do not assume anything outside these summaries. If research is insufficient, explain what is missing.\n"
     )
 
-    return biomistral_chat(tokenizer, model, device, question)
+    return biomistral_chat(tokenizer, model, device, question, max_new_tokens=300)
+
 
 
 def main():
