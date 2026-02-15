@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const openBtn = document.getElementById("chat-open");   // your "Continue chat" button
+  const openBtn = document.getElementById("chat-open");
   const panel = document.getElementById("chat-panel");
   const closeBtn = document.getElementById("chat-close");
 
@@ -7,27 +7,41 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("chat-input");
   const messages = document.getElementById("chat-messages");
 
+  const ctxEl = document.getElementById("chat-context");
+  const ic = ctxEl?.dataset?.ic || "";
+  const threshold = ctxEl?.dataset?.threshold || "";
+  const gene = ctxEl?.dataset?.gene || "";
+
+  function scrollToBottom() {
+    requestAnimationFrame(() => {
+      if (messages) {
+        messages.scrollTop = messages.scrollHeight;
+      }
+    });
+  }
+
   function addMessage(text, who) {
     const div = document.createElement("div");
     div.className = `msg ${who}`;
     div.textContent = text;
     messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
+    scrollToBottom();
   }
 
-  // Start hidden every time
+  // Start hidden
   if (panel) panel.classList.add("hidden");
 
-  // Open on button click only
+  // Open chat
   if (openBtn && panel && input) {
     openBtn.addEventListener("click", (e) => {
       e.preventDefault();
       panel.classList.remove("hidden");
       input.focus();
+      scrollToBottom();
     });
   }
 
-  // Close button
+  // Close chat
   if (closeBtn && panel) {
     closeBtn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -35,32 +49,67 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Chat submit
+  // Submit message
   if (form && input && messages) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = input.value.trim();
       if (!text) return;
 
+      let topPathways = [];
+      try {
+        const raw = ctxEl?.dataset?.topPathways || "[]";
+        topPathways = JSON.parse(raw);
+      } catch {
+        topPathways = [];
+      }
+
+      const judgementNow =
+        document.getElementById("llm-judgement-text")?.textContent?.trim() || "";
+
       addMessage(text, "user");
       input.value = "";
 
-      addMessage("...", "bot");
+      // temporary loading bubble
+      const loading = document.createElement("div");
+      loading.className = "msg bot";
+      loading.textContent = "...";
+      messages.appendChild(loading);
+      scrollToBottom();
 
       try {
         const resp = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({
+            message: text,
+            context: { ic, threshold, gene, judgement: judgementNow, topPathways }
+          })
         });
 
         const data = await resp.json();
-        messages.removeChild(messages.lastChild);
-        addMessage(data.reply || "No reply.", "bot");
-      } catch {
-        messages.removeChild(messages.lastChild);
+
+        // remove loading bubble
+        messages.removeChild(loading);
+
+        const reply = data.reply || "No reply.";
+
+        // Clean error output (LLM not running etc.)
+        if (reply.startsWith("Error:")) {
+          addMessage(
+            "Assistant is unavailable (LLM server not running).",
+            "bot"
+          );
+        } else {
+          addMessage(reply, "bot");
+        }
+
+      } catch (err) {
+        messages.removeChild(loading);
         addMessage("Network error talking to the assistant.", "bot");
       }
+
+      scrollToBottom();
     });
   }
 });

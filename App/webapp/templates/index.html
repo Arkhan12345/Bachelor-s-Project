@@ -1,33 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-<div class="container">
-  <form action="{{ url_for('search') }}" method="get">
-    <div class="row" align-items-center>
-      <div class="col" style="max-width: 260px;">
-        <label for="geneset">Gene set database</label>
-        <select id="geneset" name="geneset">
-          {% for gs in genesets %}
-            <option value="{{ gs.id }}">{{ gs.name }}</option>
-          {% endfor %}
-        </select>
+
+<div class="stack">
+  <div>
+    <h2 class="page-title">Gene search</h2>
+    <p class="page-subtitle">Select a gene and compute related independent components and pathway enrichments.</p>
+  </div>
+
+  <div class="card">
+    <form action="{{ url_for('search') }}" method="get">
+      <div class="toolbar">
+        <div class="col" style="max-width: 260px;">
+          <label for="geneset">Gene set database</label>
+          <select id="geneset" name="geneset">
+            {% for gs in genesets %}
+              <option value="{{ gs.id }}">{{ gs.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="grow">
+          <label for="gene">Gene (EntrezID, Symbol, or Gene title)</label>
+          <input type="text"
+                 id="gene"
+                 name="gene"
+                 placeholder="e.g., TP53 or 7157 or tumor protein p53"
+                 list="gene_options"
+                 autocomplete="off"
+                 required />
+          <datalist id="gene_options"></datalist>
+          <input type="hidden" id="entrez" name="entrez" />
+          <input type="hidden" id="symbol" name="symbol" />
+          <input type="hidden" id="genetitle" name="genetitle" />
+        </div>
+
+        <div class="toolbar-actions">
+          <button type="submit">Search</button>
+        </div>
       </div>
-      <div class="row" align-items-center>
-        <label for="gene">Search gene (EntrezID, Symbol, or GeneTitle)</label>
-        <input type="text" id="gene" name="gene" placeholder="e.g., TP53 or 7157 or tumor protein p53" list="gene_options" autocomplete="off" required />
-        <datalist id="gene_options"></datalist>
-        <input type="hidden" id="entrez" name="entrez" />
-        <input type="hidden" id="symbol" name="symbol" />
-        <input type="hidden" id="genetitle" name="genetitle" />
-      </div>
-      <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Search</button>
-      </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </div>
+
 <script>
- (function(){
+(function(){
   const geneInput = document.getElementById('gene');
   const datalist = document.getElementById('gene_options');
   const entrez = document.getElementById('entrez');
@@ -54,9 +71,7 @@
           opt.value = it.label;
           datalist.appendChild(opt);
         }
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     }, 200);
   });
 
@@ -67,9 +82,10 @@
       entrez.value = hit.entrez || '';
       symbol.value = hit.symbol || '';
       genetitle.value = hit.genetitle || '';
-      geneInput.value = hit.label; // show all three
+      geneInput.value = hit.label;
     }
   });
 })();
 </script>
+
 {% endblock %}

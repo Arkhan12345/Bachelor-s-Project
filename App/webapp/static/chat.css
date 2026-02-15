@@ -1,75 +1,72 @@
+/* chat widget should behave like a normal card section */
 #chat-widget {
   position: relative;
   width: 100%;
-  max-width: none;
-  margin: 0 0 1.5rem 0;
+  margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
-#chat-toggle {
-  display: none;
-}
+.hidden { display: none !important; }
 
+/* the panel is embedded in the left column card */
 #chat-panel {
-  position: relative;    
-  top: 0;
-  left: 0;
   width: 100%;
-  z-index: 50;            
-  min-height: 220px;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   border: 1px solid #e5e7eb;
+  box-shadow: none;
 }
 
-.hidden {
-  display: none !important;
-}
-
+/* integrated header */
 #chat-header {
   padding: 10px 12px;
-  background: #111827;
-  color: white;
+  background: #f8fafc;
+  color: #111827;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 650;
 }
 
-#chat-close {
-  background: transparent;
-  color: white;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
+/* KEY: keep the entire chat panel to a reasonable size */
+#chat-panel {
+  max-height: 520px;           /* adjust if you want */
 }
 
+/* KEY: the message area scrolls */
 #chat-messages {
   flex: 1;
   padding: 10px;
   overflow-y: auto;
   background: #f3f4f6;
+  min-height: 220px;
 }
 
+/* nicer long-wrap behavior */
 .msg {
   margin: 8px 0;
   padding: 8px 10px;
   border-radius: 12px;
-  max-width: 85%;
+  max-width: 92%;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  border: 1px solid transparent;
 }
 
-.msg.user { background: #dbeafe; margin-left: auto; }
-.msg.bot  { background: #fff; border: 1px solid #e5e7eb; }
+.msg.user { background: #e8f0fe; margin-left: auto; border-color: #dbeafe; }
+.msg.bot  { background: #fff; border-color: #e5e7eb; }
 
 #chat-form {
   display: flex;
   gap: 8px;
   padding: 10px;
   border-top: 1px solid #e5e7eb;
+  background: #fff;
 }
 
 #chat-input {
@@ -84,4 +81,18 @@
   border-radius: 10px;
   border: none;
   cursor: pointer;
+  background: #1976d2;
+  color: #fff;
+  font-weight: 650;
 }
+
+#chat-close {
+  background: transparent;
+  color: #111827;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+#chat-close:hover { background: rgba(17,24,39,0.06); }

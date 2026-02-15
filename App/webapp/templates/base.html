@@ -4,43 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Test{% endblock %}</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; color: #222; }
-    header { background: #0d47a1; color: white; padding: 1rem 1.25rem; }
-    header h1 { margin: 0; font-size: 1.25rem; }
-    main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
-    .container { background: #fff; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
-    .col { flex: 1 1 250px; }
-    label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
-    input[type="text"], input[type="number"], select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
-    button, .button { background: #1976d2; color: #fff; border: none; padding: 0.5rem 0.9rem; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; }
-    button:hover, .button:hover { background: #135ea7; }
-    a { color: #1976d2; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.5rem; border-bottom: 1px solid #eee; text-align: left; vertical-align: top; }
-    th { background: #f7f7f7; }
-      /* Keep very wide tables from overlapping adjacent cards */
-      .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      .scroll-x table { width: max-content; min-width: 100%; }
-      .scroll-x th, .scroll-x td { white-space: nowrap; }
-      .card { overflow: hidden; }
-    .muted { color: #666; }
-    .error { background: #fdecea; color: #b71c1c; padding: 0.75rem; border-radius: 6px; }
-    .card { border: 1px solid #eee; border-radius: 8px; padding: 0.75rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-    footer { padding: 2rem 1.25rem; color: #666; }
-  </style>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body>
 <header>
-  <h1>Prototype 1</h1>
+  <div class="brand">
+    <h1><a href="{{ url_for('index') }}">Test</a></h1>
+  </div>
 </header>
+
 <main>
   {% block content %}{% endblock %}
 </main>
-<footer class="muted">
+
+<footer class="muted small">
 </footer>
 </body>
 </html>

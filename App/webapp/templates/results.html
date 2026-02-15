@@ -2,128 +2,208 @@
 {% block title %}Results for {{ gene_display or gene }}{% endblock %}
 {% block content %}
 
-<div class="container">
-  <form action="{{ url_for('search') }}" method="get">
-    <div class="row">
-      <div class="col">
-        <label for="gene">Gene</label>
-        <input type="text" id="gene" name="gene" value="{{ gene_display or gene }}" list="gene_options" autocomplete="off" />
-        <datalist id="gene_options"></datalist>
-        <input type="hidden" id="entrez" name="entrez" value="{{ entrez }}" />
-        <input type="hidden" id="symbol" name="symbol" value="{{ gene }}" />
-        <input type="hidden" id="genetitle" name="genetitle" value="{{ genetitle }}" />
-      </div>
-      <div class="col" style="max-width: 150px; margin-left: 0.5rem;">
-        <label for="threshold">Threshold</label>
-        <input type="number" id="threshold" name="threshold" value="{{ '%.2f'|format(threshold) }}" step="0.1" />
-      </div>
-      <div class="col" style="flex: 0 0 auto; display: flex; gap: 0.5rem; align-items: flex-end; margin-left: 0.5rem;">
-        <button type="submit">Update</button>
-        <button type="submit" formaction="{{ url_for('index') }}">New search</button>
-        <button class="button" formaction="{{ url_for('api_find_ic', symbol=gene, entrez=entrez, genetitle=genetitle, threshold=threshold) }}" target="_blank">Export JSON</button>
-      </div>
-    </div>
-    <div class="col" style="max-width: 200px;">
-        <label for="geneset">Selected gene set:</label>
-        <select id="geneset" name="geneset">
-          {% for gs in genesets %}
-            <option value="{{ gs.id }}" {% if gs.id == geneset %}selected{% endif %}>{{ gs.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-  </form>
+<div class="stack">
 
-  <!-- Publications panel -->
-  <div class="card" style="margin-top:1rem; margin-bottom:1rem; padding:0.75rem;">
-    <h4 style="margin-top:0;">Publications & LLM Summary</h4>
-    <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
-      <input type="number" id="pub_max" value="5" min="1" max="20" style="width:80px;" />
-      <button id="fetch_pubs_btn" class="button">Fetch publications & summarize</button>
-      <span id="pub_status" class="muted" style="margin-left:0.5rem;"></span>
-    </div>
-
-    <div id="publications_container">
-      <!-- Filled dynamically -->
-    </div>
+  <div>
+    <h2 class="page-title">Results</h2>
+    <p class="page-subtitle">
+      Gene: <strong>{{ gene_display or gene }}</strong>
+      <span class="muted">· Threshold: {{ '%.2f'|format(threshold) }}</span>
+      <span class="muted">· Geneset: {{ geneset }}</span>
+    </p>
   </div>
 
+  <!-- Controls -->
+  <div class="card">
+    <form action="{{ url_for('search') }}" method="get">
+      <div class="toolbar">
+        <div class="grow">
+          <label for="gene">Gene</label>
+          <input type="text" id="gene" name="gene" value="{{ gene_display or gene }}" list="gene_options" autocomplete="off" />
+          <datalist id="gene_options"></datalist>
+          <input type="hidden" id="entrez" name="entrez" value="{{ entrez }}" />
+          <input type="hidden" id="symbol" name="symbol" value="{{ gene }}" />
+          <input type="hidden" id="genetitle" name="genetitle" value="{{ genetitle }}" />
+        </div>
+
+        <div class="col" style="max-width: 170px;">
+          <label for="threshold">Threshold</label>
+          <input type="number" id="threshold" name="threshold" value="{{ '%.2f'|format(threshold) }}" step="0.1" />
+        </div>
+
+        <div class="col" style="max-width: 220px;">
+          <label for="geneset">Gene set</label>
+          <select id="geneset" name="geneset">
+            {% for gs in genesets %}
+              <option value="{{ gs.id }}" {% if gs.id == geneset %}selected{% endif %}>{{ gs.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="toolbar-actions">
+        <button type="submit" id="updateBtn">Update</button>
+        <span id="updateStatus" class="muted small" style="display:none; margin-left:0.5rem;">Updating results…</span>
+          <button type="submit" class="secondary" formaction="{{ url_for('index') }}">New search</button>
+          <button class="secondary"
+             formaction="{{ url_for('api_find_ic', symbol=gene, entrez=entrez, genetitle=genetitle, threshold=threshold) }}"
+             formtarget="_blank" rel="noopener noreferrer">Export JSON</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Publications -->
+  <div class="card">
+    <div class="section-head">
+      <h3 class="section-title">Publications & LLM summary</h3>
+    </div>
+
+    <div class="row">
+      <div class="col-auto" style="max-width: 120px;">
+        <label for="pub_max">Max</label>
+        <input type="number" id="pub_max" value="5" min="1" max="20" />
+      </div>
+      <div class="col-auto" style="display:flex; gap:0.5rem; align-items:end;">
+        <button id="fetch_pubs_btn" class="secondary" type="button">Fetch & summarize</button>
+      </div>
+      <div class="col">
+        <div id="pub_status" class="muted small" style="padding-bottom:0.2rem;"></div>
+      </div>
+    </div>
+
+    <div id="publications_container" style="margin-top:0.75rem;"></div>
+  </div>
 
   {% if error %}
-    <div class="error" style="margin-top:1rem;">{{ error }}</div>
+    <div class="error">{{ error }}</div>
   {% else %}
     {% if not records %}
-      <p class="muted">No strong IC associations found.</p>
+      <div class="card">
+        <p class="muted">No strong IC associations found. Try lowering the threshold.</p>
+      </div>
     {% else %}
-  <h3>Related ICs for {{ gene_display or gene }}</h3>
-      
-      <!-- IC search/filter bar -->
-      <div style="margin-bottom: 1rem;">
-        <input type="text" id="ic_search" placeholder="Search ICs (e.g., IC39, IC43)..." style="max-width: 400px;" />
+
+      <div class="card">
+        <div class="section-head">
+          <h3 class="section-title">Related independent components</h3>
+          <span class="muted small">{{ records|length }} IC(s)</span>
+        </div>
+
+      <div class="row" style="margin-bottom: 0.5rem;">
+        <div class="col" style="max-width: 520px;">
+          <label for="ic_search">Filter ICs</label>
+
+          <div class="input-with-clear">
+            <input type="text" id="ic_search" placeholder="e.g., IC7 or IC43" />
+            <button type="button" id="ic_clear" aria-label="Clear filter">&times;</button>
+          </div>
+
+        </div>
       </div>
 
-      <div class="ic-list">
+      <div class="stack">
         {% for rec in records %}
-          <div class="card ic-item" data-ic-name="{{ rec.IC }}" style="margin-bottom: 1rem;">
-            <h4 style="margin-top:0;">
-              <a href="{{ url_for('ic_detail', ic_name=rec.IC, threshold=threshold, gene=gene) }}" style="color: #1976d2; text-decoration: none;">
-                IC: {{ rec.IC }}
-              </a>
-              <span class="muted" style="font-size: 0.85em; font-weight: normal;">(click to view plots)</span>
-            </h4>
-            <div class="muted">Loading: {{ '%.3f'|format(rec.Loading) }}</div>
-            {% if rec.Top_Pathways %}
-              <h5>Top pathways</h5>
-              <div class="scroll-x">
-                <table>
-                  <thead>
-                    <th>Pathway</th><th>Description</th><th>MSigDB</th><th>Score</th>
-                  </thead>
-                  <tbody>
-                    {% for k, v in rec.Top_Pathways.items() %}
-                      <tr>
-                        <td><a href="{{ url_for('pathway_ics', pathway_name=k, threshold=threshold) }}">{{ k }}</a></td>
-                        <td class="muted">—</td>
-                        <td><a href="http://www.broadinstitute.org/gsea/msigdb/cards/{{ k }}" target="_blank" rel="noopener noreferrer">View</a></td>
-                        <td>{{ '%.3f'|format(v) }}</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+          <details class="card ic-item" data-ic-name="{{ rec.IC }}">
+            <summary>
+              {% if top_item %}
+                <span class="muted small">· Top pathway: {{ top_item[0] }} ({{ '%.3f'|format(top_item[1]) }})</span>
+              {% endif %}
+              <div class="summary-row">
+                <div class="left">
+                  <strong>
+                    <a href="{{ url_for('ic_detail', ic_name=rec.IC, threshold=threshold, gene=gene) }}">
+                      {{ rec.IC }}
+                    </a>
+                  </strong>
+                  <span class="muted small">Loading: {{ '%.3f'|format(rec.Loading) }}</span>
+                </div>
+                <span class="muted small">Click to expand</span>
               </div>
-            {% else %}
-              <p class="muted">No pathway hits at this threshold.</p>
-            {% endif %}
-            {% if rec.Top_Samples %}
-              <h5>Top samples</h5>
-              <div class="scroll-x">
-                <table>
-                  <thead>
-                    <tr>
-                      {% for k in rec.Top_Samples[0].keys() %}
-                        <th>{{ k }}</th>
-                      {% endfor %}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for row in rec.Top_Samples %}
-                      <tr>
-                        {% for v in row.values() %}
-                          <td>{{ v }}</td>
+            </summary>
+
+            <div class="ic-body stack">
+
+              {% if rec.Top_Pathways %}
+                <div>
+                  <h4 style="margin:0 0 0.5rem;">Top pathways</h4>
+                  <div class="scroll-x">
+                    <table class="table sm">
+                      <thead>
+                        <tr>
+                          <th>Pathway</th>
+                          <th>Description</th>
+                          <th class="nowrap">MSigDB</th>
+                          <th class="num">Score</th>
+                          <th class="nowrap">Direction</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for k, v in rec.Top_Pathways.items() %}
+                          <tr>
+                            <td>
+                              <a href="{{ url_for('pathway_ics', pathway_name=k, threshold=threshold) }}">{{ k }}</a>
+                            </td>
+                            <td class="muted">—</td>
+                            <td class="nowrap">
+                              <a href="http://www.broadinstitute.org/gsea/msigdb/cards/{{ k }}"
+                                 target="_blank" rel="noopener noreferrer">View</a>
+                            </td>
+                            <td class="num">{{ '%.3f'|format(v) }}</td>
+                            <td class="nowrap">
+                              {% if v >= 0 %}
+                                <span class="chip"><span class="dot pos"></span>Positive</span>
+                              {% else %}
+                                <span class="chip"><span class="dot neg"></span>Negative</span>
+                              {% endif %}
+                            </td>
+                          </tr>
                         {% endfor %}
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% endif %}
-          </div>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              {% else %}
+                <p class="muted">No pathway hits at this threshold.</p>
+              {% endif %}
+
+              {% if rec.Top_Samples %}
+                <div>
+                  <h4 style="margin:0 0 0.5rem;">Top samples</h4>
+                  <div class="scroll-x">
+                    <table class="table sm">
+                      <thead>
+                        <tr>
+                          {% for k in rec.Top_Samples[0].keys() %}
+                            <th class="nowrap">{{ k }}</th>
+                          {% endfor %}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for row in rec.Top_Samples %}
+                          <tr>
+                            {% for v in row.values() %}
+                              <td class="nowrap">{{ v }}</td>
+                            {% endfor %}
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              {% endif %}
+
+            </div>
+          </details>
         {% endfor %}
       </div>
+
     {% endif %}
   {% endif %}
+
 </div>
-{% endblock %}
+
 <script>
+/* Gene autocomplete */
 (function(){
   const geneInput = document.getElementById('gene');
   const datalist = document.getElementById('gene_options');
@@ -151,9 +231,7 @@
           opt.value = it.label;
           datalist.appendChild(opt);
         }
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     }, 200);
   });
 
@@ -164,32 +242,69 @@
       entrez.value = hit.entrez || '';
       symbol.value = hit.symbol || '';
       genetitle.value = hit.genetitle || '';
-      geneInput.value = hit.label; // show all three
+      geneInput.value = hit.label;
     }
   });
 })();
 
-// IC search/filter functionality
+/* IC search/filter */
 (function(){
   const searchInput = document.getElementById('ic_search');
   if (!searchInput) return;
-  
+
   searchInput.addEventListener('input', function(){
     const query = searchInput.value.trim().toLowerCase();
     const items = document.querySelectorAll('.ic-item');
-    
     items.forEach(function(item){
-      const icName = item.getAttribute('data-ic-name').toLowerCase();
-      if (!query || icName.includes(query)) {
-        item.style.display = '';
-      } else {
-        item.style.display = 'none';
-      }
+      const icName = (item.getAttribute('data-ic-name') || '').toLowerCase();
+      item.style.display = (!query || icName.includes(query)) ? '' : 'none';
     });
   });
 })();
+(function(){
+  const input = document.getElementById('ic_search');
+  const clear = document.getElementById('ic_clear');
+  if (!input || !clear) return;
+  clear.addEventListener('click', () => {
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    input.focus();
+  });
+})();
 
-// Publications UI
+const icInput = document.getElementById("ic_search");
+const icClear = document.getElementById("ic_clear");
+
+if (icInput && icClear) {
+  icClear.style.display = "none";
+
+  icInput.addEventListener("input", () => {
+    icClear.style.display = icInput.value ? "flex" : "none";
+  });
+
+  icClear.addEventListener("click", () => {
+    icInput.value = "";
+    icInput.dispatchEvent(new Event("input"));
+    icInput.focus();
+  });
+}
+
+
+
+(function(){
+  const form = document.querySelector('form[action="{{ url_for("search") }}"]');
+  const btn = document.getElementById('updateBtn');
+  const status = document.getElementById('updateStatus');
+  if (!form || !btn) return;
+
+  form.addEventListener('submit', () => {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Updating…';
+    if (status) status.style.display = '';
+  });
+})();
+
+/* Publications UI */
 (function(){
   const fetchBtn = document.getElementById('fetch_pubs_btn');
   const status = document.getElementById('pub_status');
@@ -198,8 +313,10 @@
 
   if (!fetchBtn) return;
 
-  fetchBtn.addEventListener('click', async function(e){
-    e.preventDefault();
+  fetchBtn.addEventListener('click', async function(){
+    container.innerHTML = '';
+    status.textContent = 'Fetching...';
+
     const geneVal = document.getElementById('symbol').value || document.getElementById('gene').value || '';
     try {
       const max = parseInt(pubMax.value) || 5;
@@ -211,33 +328,44 @@
       }
       const data = await res.json();
       status.textContent = '';
-      // render publications
+
       const pubs = data.publications || [];
       const summary = data.llm_summary || '';
 
-      const summaryEl = document.createElement('div');
-      summaryEl.innerHTML = `<h5>LLM Summary</h5><pre style="white-space:pre-wrap;">${escapeHtml(summary)}</pre>`;
-      container.appendChild(summaryEl);
+      const summaryCard = document.createElement('div');
+      summaryCard.className = 'card';
+      summaryCard.style.boxShadow = 'none';
+      summaryCard.style.marginTop = '0.5rem';
+      summaryCard.innerHTML = `<h4 style="margin:0 0 0.5rem;">LLM summary</h4>
+        <pre style="white-space:pre-wrap; margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.9rem;">${escapeHtml(summary)}</pre>`;
+      container.appendChild(summaryCard);
 
-      const listEl = document.createElement('div');
-      listEl.innerHTML = `<h5>Publications (${pubs.length})</h5>`;
-      const ul = document.createElement('div');
-      ul.style.display = 'grid';
-      ul.style.gap = '0.5rem';
+      const listWrap = document.createElement('div');
+      listWrap.style.marginTop = '0.75rem';
+      listWrap.innerHTML = `<h4 style="margin:0 0 0.5rem;">Publications (${pubs.length})</h4>`;
+      const grid = document.createElement('div');
+      grid.style.display = 'grid';
+      grid.style.gap = '0.6rem';
 
       pubs.forEach(p => {
         const card = document.createElement('div');
         card.className = 'card';
+        card.style.boxShadow = 'none';
         const title = p.title || '(no title)';
         const year = p.year || '';
         const authors = p.authors || '';
         const abs = p.abstract || '';
-        const url = p.url || p.doi ? (p.doi ? `https://doi.org/${p.doi}` : p.url) : '';
-        card.innerHTML = `<strong>${escapeHtml(title)}</strong> <span class="muted">(${escapeHtml(year)})</span><div class="muted">${escapeHtml(authors)}</div><div style="margin-top:0.5rem;">${escapeHtml(truncate(abs,400))}</div>${url?`<div style="margin-top:0.5rem;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View source</a></div>`:''}`;
-        ul.appendChild(card);
+        const url = (p.doi ? `https://doi.org/${p.doi}` : (p.url || ''));
+        card.innerHTML = `<strong>${escapeHtml(title)}</strong>
+          <span class="muted"> (${escapeHtml(year)})</span>
+          <div class="muted small" style="margin-top:0.2rem;">${escapeHtml(authors)}</div>
+          <div class="small" style="margin-top:0.5rem;">${escapeHtml(truncate(abs, 420))}</div>
+          ${url ? `<div style="margin-top:0.5rem;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View source</a></div>` : ''}`;
+        grid.appendChild(card);
       });
-      listEl.appendChild(ul);
-      container.appendChild(listEl);
+
+      listWrap.appendChild(grid);
+      container.appendChild(listWrap);
 
     } catch (err) {
       status.textContent = 'Error fetching publications';
@@ -245,13 +373,14 @@
     }
   });
 
-  // small helpers
   function escapeHtml(s) {
     if (!s) return '';
     return s.replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
     });
   }
-  function truncate(s, n){ if(!s) return ''; return s.length>n? s.slice(0,n)+'...':s; }
+  function truncate(s, n){ if(!s) return ''; return s.length>n ? s.slice(0,n)+'...' : s; }
 })();
 </script>
+
+{% endblock %}

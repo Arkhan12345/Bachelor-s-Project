@@ -115,7 +115,7 @@ def load_model():   #common pattern to load model
     return tokenizer, model, device
 
 
-def biomistral_chat(tokenizer, model, device, prompt: str, max_new_tokens: int = 200) -> str:
+def biomistral_chat(tokenizer, model, device, prompt: str, max_new_tokens: int = 200, temperature: float = 0.7, top_p: float = 0.9) -> str:
     system_prompt = (
         "You are a medical research assistant. "
         "Explain concepts clearly. Do not provide diagnosis or personal medical advice."
@@ -144,6 +144,42 @@ def biomistral_chat(tokenizer, model, device, prompt: str, max_new_tokens: int =
             eos_token_id=tokenizer.eos_token_id,
             pad_token_id=tokenizer.eos_token_id,
         )
+
+    new_tokens = output_ids[0, inputs["input_ids"].shape[1]:]
+    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+def biomistral_generate_raw(
+    tokenizer,
+    model,
+    device,
+    prompt: str,
+    max_new_tokens: int = 512,
+    temperature: float = 0.7,
+    top_p: float = 0.9,
+) -> str:
+    """
+    Generate from a *fully-formed* prompt without wrapping it in 'Question:' / 'Answer:'.
+    This is what you want when your caller (Flask app) already builds a structured prompt.
+    """
+    prompt = (prompt or "").strip()
+    if not prompt:
+        return ""
+
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=4096).to(device)
+
+    with torch.no_grad():
+        start = time.time()
+        output_ids = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            do_sample=True,
+            temperature=temperature,
+            top_p=top_p,
+            eos_token_id=tokenizer.eos_token_id,
+            pad_token_id=tokenizer.eos_token_id,
+        )
+        end = time.time()
+        print(f"[RAW] Generated in {end - start:.2f} seconds.")
 
     new_tokens = output_ids[0, inputs["input_ids"].shape[1]:]
     return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()

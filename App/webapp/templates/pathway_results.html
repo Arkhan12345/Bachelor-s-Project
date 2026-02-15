@@ -1,114 +1,158 @@
 {% extends "base.html" %}
-{% block title %}Results for {{ pathway }}{% endblock %}
+{% block title %}Pathway: {{ pathway }}{% endblock %}
 {% block content %}
-<div class="container">
-  <div style="margin-bottom: 1rem;">
-    <a href="javascript:history.back()" style="color: #1976d2;">← Back to gene results</a>
+
+<div class="stack">
+
+  <div>
+    <a href="javascript:history.back()" class="muted small">← Back</a>
+    <h2 class="page-title">Pathway</h2>
+    <p class="page-subtitle">
+      <strong>{{ pathway }}</strong>
+      <span class="muted">· Threshold: {{ '%.2f'|format(threshold) }}</span>
+      <span class="muted">· Geneset: {{ geneset }}</span>
+    </p>
   </div>
-  
-  <h3>Related ICs for pathway: {{ pathway }}</h3>
-  
-  <div style="margin-bottom: 1rem;">
-    <a class="button" href="http://www.broadinstitute.org/gsea/msigdb/cards/{{ pathway }}" target="_blank" rel="noopener noreferrer">View in MSigDB</a>
-  </div>
-  
-  <div class="muted" style="margin-bottom: 1rem;">
-    Threshold: {{ '%.2f'|format(threshold) }} | Selected geneset: {{ geneset }}
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="grow">
+        <label>MSigDB</label>
+        <div class="muted small">Open the reference card for this pathway.</div>
+      </div>
+      <div class="toolbar-actions">
+        <a class="button secondary"
+           href="http://www.broadinstitute.org/gsea/msigdb/cards/{{ pathway }}"
+           target="_blank" rel="noopener noreferrer">View in MSigDB</a>
+      </div>
+    </div>
   </div>
 
   {% if error %}
-    <div class="error" style="margin-top:1rem;">{{ error }}</div>
+    <div class="error">{{ error }}</div>
   {% else %}
     {% if not records %}
-      <p class="muted">No strong IC associations found for this pathway.</p>
+      <div class="card">
+        <p class="muted">No strong IC associations found for this pathway.</p>
+      </div>
     {% else %}
-      <!-- IC search/filter bar -->
-      <div style="margin-bottom: 1rem;">
-        <input type="text" id="ic_search" placeholder="Search ICs..." style="max-width: 400px;" />
+
+      <div class="card">
+        <div class="section-head">
+          <h3 class="section-title">Related independent components</h3>
+          <span class="muted small">{{ records|length }} IC(s)</span>
+        </div>
+
+      <div class="row" style="margin-bottom: 0.5rem;">
+        <div class="col" style="max-width: 520px;">
+          <label for="ic_search">Filter ICs</label>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="text" id="ic_search" placeholder="e.g., IC7 or IC43" />
+            <button type="button" id="ic_clear" class="button secondary" style="padding:0.55rem 0.85rem;">x</button>
+          </div>
+        </div>
       </div>
 
-      <div class="ic-list">
+      <div class="stack">
         {% for rec in records %}
-          <div class="card ic-item" data-ic-name="{{ rec.IC }}" style="margin-bottom: 1rem;">
-            <h4 style="margin-top:0;">
-              <a href="{{ url_for('ic_detail', ic_name=rec.IC, threshold=threshold) }}" style="color: #1976d2; text-decoration: none;">
-                IC: {{ rec.IC }}
-              </a>
-              <span class="muted" style="font-size: 0.85em; font-weight: normal;">(click to view plots)</span>
-            </h4>
-            <div class="muted">Pathway Score: {{ '%.3f'|format(rec.Score) }}</div>
-            
-            {% if rec.Top_Genes %}
-              <h5>Top genes in this IC</h5>
-              <div class="scroll-x">
-                <table>
-                  <thead>
-                    <tr><th>Symbol</th><th>Gene Title</th><th>Loading</th></tr>
-                  </thead>
-                  <tbody>
-                    {% for gene in rec.Top_Genes %}
-                      <tr>
-                        <td><a href="{{ url_for('search', gene=gene.SYMBOL, entrez=gene.ENTREZID, symbol=gene.SYMBOL, genetitle=gene.GENETITLE, threshold=threshold) }}">{{ gene.SYMBOL }}</a></td>
-                        <td>{{ gene.GENETITLE }}</td>
-                        <td>{{ '%.3f'|format(gene.Loading) }}</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+          <details class="card ic-item" data-ic-name="{{ rec.IC }}">
+            <summary>
+              <div class="summary-row">
+                <div class="left">
+                  <strong>
+                    <a href="{{ url_for('ic_detail', ic_name=rec.IC, threshold=threshold) }}">{{ rec.IC }}</a>
+                  </strong>
+                  <span class="muted small">Pathway score: {{ '%.3f'|format(rec.Score) }}</span>
+                </div>
+                <span class="muted small">Click to expand</span>
               </div>
-            {% else %}
-              <p class="muted">No gene loadings found at this threshold.</p>
-            {% endif %}
-            
-            {% if rec.Top_Samples %}
-              <h5>Top samples</h5>
-              <div class="scroll-x">
-                <table>
-                  <thead>
-                    <tr>
-                      {% for k in rec.Top_Samples[0].keys() %}
-                        <th>{{ k }}</th>
-                      {% endfor %}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for row in rec.Top_Samples %}
-                      <tr>
-                        {% for v in row.values() %}
-                          <td>{{ v }}</td>
+            </summary>
+
+            <div class="ic-body stack">
+
+              {% if rec.Top_Genes %}
+                <div>
+                  <h4 style="margin:0 0 0.5rem;">Top genes in this IC</h4>
+                  <div class="scroll-x">
+                    <table class="table sm">
+                      <thead>
+                        <tr>
+                          <th>Symbol</th>
+                          <th>Gene title</th>
+                          <th class="num">Loading</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for gene in rec.Top_Genes %}
+                          <tr>
+                            <td>
+                              <a href="{{ url_for('search', gene=gene.SYMBOL, entrez=gene.ENTREZID, symbol=gene.SYMBOL, genetitle=gene.GENETITLE, threshold=threshold) }}">
+                                {{ gene.SYMBOL }}
+                              </a>
+                            </td>
+                            <td>{{ gene.GENETITLE }}</td>
+                            <td class="num">{{ '%.3f'|format(gene.Loading) }}</td>
+                          </tr>
                         {% endfor %}
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% endif %}
-          </div>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              {% else %}
+                <p class="muted">No gene loadings found at this threshold.</p>
+              {% endif %}
+
+              {% if rec.Top_Samples %}
+                <div>
+                  <h4 style="margin:0 0 0.5rem;">Top samples</h4>
+                  <div class="scroll-x">
+                    <table class="table sm">
+                      <thead>
+                        <tr>
+                          {% for k in rec.Top_Samples[0].keys() %}
+                            <th class="nowrap">{{ k }}</th>
+                          {% endfor %}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for row in rec.Top_Samples %}
+                          <tr>
+                            {% for v in row.values() %}
+                              <td class="nowrap">{{ v }}</td>
+                            {% endfor %}
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              {% endif %}
+
+            </div>
+          </details>
         {% endfor %}
       </div>
+
     {% endif %}
   {% endif %}
+
 </div>
 
 <script>
-// IC search/filter functionality
+/* IC filter */
 (function(){
   const searchInput = document.getElementById('ic_search');
   if (!searchInput) return;
-  
+
   searchInput.addEventListener('input', function(){
     const query = searchInput.value.trim().toLowerCase();
     const items = document.querySelectorAll('.ic-item');
-    
     items.forEach(function(item){
-      const icName = item.getAttribute('data-ic-name').toLowerCase();
-      if (!query || icName.includes(query)) {
-        item.style.display = '';
-      } else {
-        item.style.display = 'none';
-      }
+      const icName = (item.getAttribute('data-ic-name') || '').toLowerCase();
+      item.style.display = (!query || icName.includes(query)) ? '' : 'none';
     });
   });
 })();
 </script>
+
 {% endblock %}

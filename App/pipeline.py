@@ -91,7 +91,7 @@ def find_ic(gene_symbol, threshold: float = 3):
     results = []
 
     gsea_filtered = filter_gene_enrichment(threshold)
-    mixing_filtered = filter_mixing_m(threshold)
+    mixing_filtered = filter_mixing_m(0.1)
 
     for ic_name in strong_ics.index:
         # Top pathways for this IC (use the prefiltered GSEA matrix)
@@ -183,6 +183,50 @@ def find_pathway_ics(pathway_name, threshold: float = 3):
         })
     
     return results
+
+def get_top_pathways_for_ic(ic_name: str, threshold: float, top_k: int = 10):
+    """
+    Return list of (pathway_name, score) sorted by absolute score desc,
+    filtered by abs(score) > threshold.
+
+    Works whether gsea has:
+      - ICs as rows (index) and pathways as columns, OR
+      - pathways as rows (index) and ICs as columns.
+    Never raises KeyError; returns [] if not found.
+    """
+    # Normalize input
+    ic = str(ic_name).strip()
+
+    if "gsea" not in globals() or gsea is None:
+        return []
+
+    # Try: IC is a ROW
+    if ic in gsea.index:
+        scores = gsea.loc[ic]
+    # Try: IC is a COLUMN
+    elif ic in gsea.columns:
+        scores = gsea[ic]
+    else:
+        # Optional: try case-insensitive match
+        idx_match = [x for x in gsea.index.astype(str) if x.lower() == ic.lower()]
+        col_match = [x for x in gsea.columns.astype(str) if x.lower() == ic.lower()]
+        if idx_match:
+            scores = gsea.loc[idx_match[0]]
+        elif col_match:
+            scores = gsea[col_match[0]]
+        else:
+            return []
+
+    # Make sure numeric
+    scores = pd.to_numeric(scores, errors="coerce").dropna()
+
+    # Filter and sort
+    filt = scores[scores.abs() > float(threshold)]
+    if filt.empty:
+        return []
+
+    filt = filt.sort_values(key=lambda s: s.abs(), ascending=False)
+    return [(str(idx), float(val)) for idx, val in filt.head(top_k).items()]
 
 
 def plot_to_base64(fig):

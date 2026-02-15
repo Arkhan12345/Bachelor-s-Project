@@ -22,6 +22,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 from pipeline import find_ic, find_pathway_ics, genes, generate_ic_enrichment_plot, generate_ic_sample_annotation_plots
+from pipeline import get_top_pathways_for_ic
 
 # Flask app setup
 app = Flask(__name__, template_folder=str(THIS_DIR / "templates"), static_folder=str(THIS_DIR / "static"))
@@ -170,10 +171,11 @@ def summarize_publications(pub_list, max_papers_for_llm=5):
     prompt = "\n".join(prompt_parts)
 
     payload = {
-        "prompt": prompt,
-        "max_new_tokens": 400,
-        "temperature": 0.0,
-        "top_p": 0.9,
+    "prompt": prompt,
+    "raw_prompt": True,
+    "max_new_tokens": 600,
+    "temperature": 0.2,
+    "top_p": 0.9,
     }
     resp = requests.post(LLM_URL, json=payload, timeout=60)
     resp.raise_for_status()
@@ -216,7 +218,7 @@ def search():
     if isinstance(result, str):
         error = result
     else:
-        records = result
+        records = sorted(result, key=lambda r: abs(float(r.get("Loading", 0) or 0)), reverse=True)
 
     return render_template(
         "results.html",
@@ -327,7 +329,7 @@ def ic_detail(ic_name):
     print(f"Annotation plots type: {type(annotation_plots)}")
     print(f"Annotation plots: {annotation_plots.keys() if annotation_plots else 'empty/None'}")
     print(f"=== END FLASK DEBUG ===\n")
-    
+    top_pathways = get_top_pathways_for_ic(ic_name, threshold, top_k=10)
     return render_template(
         "ic_detail.html",
         ic_name=ic_name,
@@ -335,29 +337,208 @@ def ic_detail(ic_name):
         gene=gene,
         enrichment_plot=enrichment_plot,
         annotation_plots=annotation_plots,
+        top_pathways=top_pathways
     )
+
+
+@app.route("/summary", methods=["POST"])
+def summary():
+    data = request.get_json() or {}
+
+    ic = data.get("ic", "")
+    threshold = data.get("threshold", "")
+    gene = data.get("gene", "")
+    has_enrichment = data.get("hasEnrichment", False)
+    annotation_names = data.get("annotationNames", [])
+    top_pathways = data.get("topPathways") or []
+    pathway_lines = "\n".join([f"- {name}: {score:+.3f}" for name, score in top_pathways]) or "none"
+
+
+    prompt = f"""
+        You are a biomedical research assistant interpreting Independent Component Analysis (ICA) results.
+
+        Component: {ic}
+        Threshold: {threshold}
+        Related gene: {gene}
+
+        Enrichment plot available: {"yes" if has_enrichment else "no"}
+        Sample annotation plots: {", ".join(annotation_names) if annotation_names else "none"}
+        Top pathway enrichments:
+        {pathway_lines}
+
+        Provide a concise biological interpretation in 4-6 bullet points.
+        - Use '-' bullets only
+        - Do NOT number bullets
+        - Be specific and mechanistic where possible
+
+        ASSISTANT ANSWER:
+        -
+        """.strip()
+
+    try:
+        payload = {
+            "prompt": prompt,
+            "raw_prompt": True,
+            "max_new_tokens": 300,
+            "temperature": 0.3,
+            "top_p": 0.9,
+        }
+        resp = requests.post(LLM_URL, json=payload, timeout=120)
+        resp.raise_for_status()
+        reply = resp.json().get("output", "").strip()
+        marker = "ASSISTANT ANSWER:"
+        if marker in reply:
+            reply = reply.split(marker, 1)[-1].strip()
+        if not reply:
+            reply = "Sorry — I didn't generate a valid answer. Please re-ask your question."
+
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.get_json() or {}
-    user_msg = data.get("message", "").strip()
+    user_msg = (data.get("message") or "").strip()
+    ctx = data.get("context") or {}
+
     if not user_msg:
         return jsonify({"reply": "Please ask something."}), 400
-    
-    try:
+
+    # Identify this browser session
+    if "sid" not in session:
+        session["sid"] = uuid.uuid4().hex
+
+    sid = session["sid"]
+
+    ic = (ctx.get("ic") or "").strip()
+    gene = (ctx.get("gene") or "").strip()
+    threshold = ctx.get("threshold")
+    judgement = (ctx.get("judgement") or "").strip()
+
+    # Per-session, per-IC chat history
+    # Stored in signed cookie session, so keep it reasonably sized
+    histories = session.get("chat_histories", {})
+    key = f"{sid}::{ic}::{gene}::{threshold}"
+    history = histories.get(key, [])
+
+    top_pathways = ctx.get("topPathways") or []
+    pathway_lines = "\n".join([f"- {name}: {score:+.3f}" for name, score in top_pathways]) or "none"
+
+    history.append({"role": "user", "content": user_msg})
+
+
+    history_text = "\n".join(
+        f"{m['role'].upper()}: {m['content']}"
+        for m in history[-CHAT_HISTORY_MAX_TURNS:]
+    )
+
+    prompt = f"""SYSTEM:
+    You are a biomedical research assistant interpreting ICA results from gene expression.
+    Follow the rules exactly.
+
+    CONTEXT:
+    IC: {ic}
+    Threshold: {threshold}
+    Related gene: {gene}
+
+    Top pathway enrichments (score shown; positive/negative indicate direction):
+    {pathway_lines}
+
+    Background (do NOT quote or repeat this text; use only as context):
+    """
+    {judgement}
+    """
+
+    CHAT HISTORY:
+    {history_text}
+
+    RULES:
+    -Do NOT copy the background judgement text verbatim. Summarize it only if relevant.
+    - Write ONLY the assistant answer. Do NOT repeat the system prompt.
+    - Answer the LAST USER message.
+    - If the user asks to name pathways, ONLY use the pathway list shown above.
+    - If the pathway list is 'none', say you cannot name them from the provided context.
+    - When naming pathways, you must copy the pathway label exactly as written in the list.
+    - If you can't copy at least one exact label, answer: I can't list pathways because none were provided.
+
+    ASSISTANT ANSWER:
+    -
+    """.strip()
+
+    def _call_llm(prompt_text: str) -> str:
         payload = {
-            "prompt": user_msg,
-            "max_new_tokens": 200,
-            "temperature": 0.7,
+            "prompt": prompt_text,
+            "raw_prompt": True,
+            "max_new_tokens": 300,
+            "temperature": 0.4,
             "top_p": 0.9,
         }
         resp = requests.post(LLM_URL, json=payload, timeout=120)
         resp.raise_for_status()
-        reply = resp.json().get("output", "No response from LLM.")
+        try:
+            data = resp.json()
+        except ValueError:
+            return ""
+        return (data.get("output") or "").strip()
+
+    try:
+        reply = _call_llm(prompt)
+        marker = "ASSISTANT ANSWER:"
+        if marker in reply:
+            reply = reply.split(marker, 1)[-1].strip()
+
+        # If it still starts with a prompt-like line, hard-trim common echoes
+
+        reply = re.sub(
+            r"^(SYSTEM:|CONTEXT:|CHAT HISTORY:|RULES:)[^\n]*\n?",
+            "",
+            reply,
+            flags=re.MULTILINE
+        ).strip()
+
+        # Fallback if reply got nuked
+        if not reply:
+            # One retry with a shorter prompt to reduce formatting echoes.
+            retry_prompt = f"""SYSTEM: You are a biomedical research assistant.\n\nCONTEXT:\nIC: {ic}\nThreshold: {threshold}\nRelated gene: {gene}\nTop pathway enrichments:\n{pathway_lines}\n\nUSER: {user_msg}\nASSISTANT ANSWER:""".strip()
+            reply = _call_llm(retry_prompt)
+            if marker in reply:
+                reply = reply.split(marker, 1)[-1].strip()
+            if not reply:
+                reply = "Sorry — I didn't generate a valid answer. Please re-ask your question."
+
+        # Append assistant reply and trim
+        history.append({"role": "assistant", "content": reply})
+        history = history[-CHAT_HISTORY_MAX_TURNS:]
+
+        histories[key] = history
+        session["chat_histories"] = histories
+
         return jsonify({"reply": reply})
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"}), 500
+
+
+@app.route("/chat/reset", methods=["POST"])
+def chat_reset():
+    data = request.get_json() or {}
+    ctx = data.get("context") or {}
+
+    if "sid" not in session:
+        return jsonify({"ok": True})
+
+    sid = session["sid"]
+    ic = (ctx.get("ic") or "").strip()
+    gene = (ctx.get("gene") or "").strip()
+    threshold = ctx.get("threshold")
+
+    histories = session.get("chat_histories", {})
+    key = f"{sid}::{ic}::{gene}::{threshold}"
+    histories.pop(key, None)
+    session["chat_histories"] = histories
+
+    return jsonify({"ok": True})
 
 
 @app.route("/api/gene_publications")
@@ -385,3 +566,4 @@ def api_gene_publications():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
     app.run(host="0.0.0.0", port=port, debug=False)
+ 

@@ -38,7 +38,7 @@ Open a new terminal(from now on use this one) or use the local command prompt to
 ssh -L 5000:a100gpu6:5000 -L 8000:a100gpu6:8000 s5068290@interactive1.hb.hpc.rug.nl
 ssh -L 5000:interactive1:5000 -L 8000:interactive1:8000 s5068290@interactive1.hb.hpc.rug.nl
 ```
-ssh -N -L 5000:a100gpu6:5000 -L 8000:a100gpu6:8000 s5068290@interactive1.hb.hpc.rug.nl
+ssh -N -L 15000:v100v2gpu17:5000 -L 18000:v100v2gpu17:8000 s5068290@interactive1.hb.hpc.rug.nl
 
 To close the connection:
 ```bash
