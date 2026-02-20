@@ -87,23 +87,33 @@
         <div class="section-head">
           <h3 class="section-title">Related independent components</h3>
           <span class="muted small">{{ records|length }} IC(s)</span>
-        </div>
+      </div>
 
       <div class="row" style="margin-bottom: 0.5rem;">
         <div class="col" style="max-width: 520px;">
           <label for="ic_search">Filter ICs</label>
-
           <div class="input-with-clear">
             <input type="text" id="ic_search" placeholder="e.g., IC7 or IC43" />
             <button type="button" id="ic_clear" aria-label="Clear filter">&times;</button>
           </div>
+        </div>
 
+        <div class="col" style="max-width: 240px;">
+          <label for="ic_sort">Sort</label>
+          <select id="ic_sort">
+            <option value="abs_desc">Abs loading (high → low)</option>
+            <option value="load_desc">Loading (high → low)</option>
+            <option value="load_asc">Loading (low → high)</option>
+            <option value="name_asc">IC name (A → Z)</option>
+          </select>
         </div>
       </div>
 
-      <div class="stack">
+      <div class="stack" id="ic_list">
         {% for rec in records %}
-          <details class="card ic-item" data-ic-name="{{ rec.IC }}">
+          <details class="card ic-item"
+                   data-ic-name="{{ rec.IC }}"
+                   data-loading="{{ rec.Loading }}">
             <summary>
               {% if top_item %}
                 <span class="muted small">· Top pathway: {{ top_item[0] }} ({{ '%.3f'|format(top_item[1]) }})</span>
@@ -117,7 +127,10 @@
                   </strong>
                   <span class="muted small">Loading: {{ '%.3f'|format(rec.Loading) }}</span>
                 </div>
-                <span class="muted small">Click to expand</span>
+                <span class="ic-expand">
+                  <span class="ic-expand-text">Expand</span>
+                  <span class="chevron">▾</span>
+                </span>
               </div>
             </summary>
 
@@ -247,6 +260,32 @@
   });
 })();
 
+(function(){
+  const list = document.getElementById('ic_list');
+  const sortSel = document.getElementById('ic_sort');
+  if (!list || !sortSel) return;
+
+  function sortItems(mode){
+    const items = Array.from(list.querySelectorAll('.ic-item'));
+    items.sort((a,b) => {
+      const nameA = (a.dataset.icName || '').toLowerCase();
+      const nameB = (b.dataset.icName || '').toLowerCase();
+      const la = parseFloat(a.dataset.loading || '0');
+      const lb = parseFloat(b.dataset.loading || '0');
+
+      if (mode === 'abs_desc') return Math.abs(lb) - Math.abs(la);
+      if (mode === 'load_desc') return lb - la;
+      if (mode === 'load_asc') return la - lb;
+      return nameA.localeCompare(nameB);
+    });
+
+    for (const el of items) list.appendChild(el); // reorders DOM
+  }
+
+  sortSel.addEventListener('change', () => sortItems(sortSel.value));
+  sortItems(sortSel.value);
+})();
+
 /* IC search/filter */
 (function(){
   const searchInput = document.getElementById('ic_search');
@@ -288,7 +327,6 @@ if (icInput && icClear) {
     icInput.focus();
   });
 }
-
 
 
 (function(){
