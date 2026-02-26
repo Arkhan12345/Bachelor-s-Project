@@ -406,3 +406,93 @@ input, select, button {
 details.ic-item[open]:hover{
   transform: none;
 }
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding: 14px 18px;
+}
+
+.top-search{ min-width: 360px; max-width: 720px; width: 52vw; }
+#topSearchForm{
+  position: relative;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+#geneInput{
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  outline: none;
+  background: var(--panel, #fff);
+}
+
+#thresholdInput{
+  width: 90px;
+  padding: 10px 10px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  outline: none;
+  background: var(--panel, #fff);
+}
+
+#searchBtn{
+  padding: 10px 14px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--panel, #fff);
+  cursor: pointer;
+}
+
+#searchBtn:disabled{ opacity: 0.6; cursor: not-allowed; }
+
+.suggestions{
+  position:absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--panel, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.suggestions.hidden{ display:none; }
+
+.suggestion-item{
+  padding: 10px 12px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active{
+  background: rgba(17,24,39,0.06);
+}
+
+.suggestion-small{
+  display:block;
+  margin-top: 3px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.suggestion-meta{
+  display:block;
+  margin-top: 3px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.gene-field{
+  position: relative;
+}
+
+.toolbar, .card, .grow { overflow: visible !important; }

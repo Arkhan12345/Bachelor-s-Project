@@ -7,7 +7,7 @@ A biomedical research assistant application that integrates Independent Componen
 ```
 App/
   webapp/
-    app.py              # Flask web application
+    app.py              # Flask web application (port 5000)
     static/             # CSS, JS files
     templates/          # HTML templates
   pipeline.py           # ICA analysis pipeline
@@ -21,94 +21,159 @@ LLM/
 Archive/                # Reference data files
 ```
 
-### Setup Instructions
+---
 
-### Step 1: Request GPU Resources (terminal 1)
+## Restart from zero (stop everything cleanly)
 
+### A) On the GPU node (inside your `srun` shell)
+If you used **tmux**:
+- In tmux: stop servers with `Ctrl+C` in each pane/window
+- Then exit tmux: `exit` (or `Ctrl+b` then `:kill-session`)
+
+If you started servers in the background:
 ```bash
-srun --gres=gpu:1 --mem=32G --cpus-per-task=4 --time=01:00:00 --pty bash
+pkill -f "python .*App/webapp/app.py" || true
+pkill -f "python .*LLM/llm_server.py" || true
 ```
-Adjust time as needed(hours:minutes:seconds).
 
-#### Step 2: Set up SSH Port Forwarding (terminal 2)
-
-Open a new terminal(from now on use this one) or use the local command prompt to connect with port forwarding:
-
-```bash
-ssh -L 5000:a100gpu6:5000 -L 8000:a100gpu6:8000 s5068290@interactive1.hb.hpc.rug.nl
-ssh -L 5000:interactive1:5000 -L 8000:interactive1:8000 s5068290@interactive1.hb.hpc.rug.nl
-```
-ssh -N -L 15000:v100v2gpu17:5000 -L 18000:v100v2gpu17:8000 s5068290@interactive1.hb.hpc.rug.nl
-
-To close the connection:
+Then leave the compute node shell:
 ```bash
 exit
 ```
 
-**Note:** Replace `v100v2gpu17` with your actual compute node name. You'll see it in your terminal prompt (e.g., `[s5068290@v100v2gpu17 ~]$`)
-Replace `s5068290` with the student/professor number used to login into habrok.
-`interactive1.hb.hpc.rug.nl` represents the login node, replace as needed.
+### B) Cancel the Slurm job (from interactive1 / login shell)
+Find your job id and cancel it:
+```bash
+squeue -u $USER
+scancel <JOBID>
+```
 
-#### Step 3: Create/Activate Conda Environment + Install requirements
+### C) Close your laptop tunnel
+On **your laptop** terminal where you ran SSH port-forwarding:
+- press `Ctrl+C` (if you used `ssh -N ...`) or type `exit`
 
+---
+
+## Correct run instructions (with tmux)
+
+> **Important idea:** run BOTH servers (LLM on 8000 and Webapp on 5000) on the **same GPU compute node** (the one you get from `srun`).  
+> Only do SSH port-forwarding from your **laptop → cluster**.
+
+### Step 0 — (One-time) create conda env
+Run this once (on any node where you have conda available; typically `interactive1` is easiest):
 ```bash
 module load Anaconda3
-conda create -n biomistral_app python=3.11
-conda activate biomistral_app
+conda create -n biomistral_demo python=3.11 -y
+conda activate biomistral_demo
+pip install -r ~/Bproj/Bachelor-s-Project/Bachelor-s-Project/requirements.txt
 ```
 
-The module load and conda activate(not create) commands will have to be reused every time when restarting.
-You will know it is active if you see (biomistral_app) before the path in the terminal.
+After this, you will normally only need `module load` + `conda activate`.
+
+---
+
+### Step 1 — Request GPU resources (on interactive1)
+```bash
+srun --gres=gpu:1 --mem=32G --cpus-per-task=4 --time=01:00:00 --pty bash
+```
+
+You should now be on a compute node (example):
+```
+[s5068290@a100gpu6 ...]$
+```
+
+---
+
+### Step 2 — Activate environment (on the compute node)
+```bash
+module load Anaconda3
+conda activate biomistral_demo
+```
+
+---
+
+### Step 3 — Start tmux (on the compute node)
+```bash
+tmux new -s biomistral
+```
+
+Useful tmux keys:
+- Split panes: `Ctrl+b` then `%` (vertical) or `"` (horizontal)
+- Switch panes: `Ctrl+b` then arrow keys
+- Detach: `Ctrl+b` then `d`
+- Re-attach later: `tmux attach -t biomistral`
+
+---
+
+### Step 4 — Start the LLM server (tmux pane 1, compute node)
+```bash
+cd ~/Bproj/Bachelor-s-Project/Bachelor-s-Project/LLM
+python llm_server.py
+```
+
+You should see something like:
+```
+Running on http://127.0.0.1:8000
+```
+
+(Optional check in another pane)
+```bash
+ss -tulpn | grep ':8000'
+```
+
+---
+
+### Step 5 — Start the Flask webapp (tmux pane 2, compute node)
+```bash
+cd ~/Bproj/Bachelor-s-Project/Bachelor-s-Project/App/webapp
+python app.py
+```
+
+You should see something like:
+```
+Running on http://127.0.0.1:5000
+```
+
+(Optional check in another pane)
+```bash
+ss -tulpn | grep ':5000'
+```
+
+---
+
+### Step 6 — Local laptop port-forward (run ONLY on your laptop)
+Open a new terminal on your **laptop** and run:
 
 ```bash
-pip install -r requirements.txt
+ssh -N -L 5000:<COMPUTE_NODE>:5000 -L 8000:<COMPUTE_NODE>:8000 s5068290@interactive1.hb.hpc.rug.nl
 ```
 
-This will install the libraries in your conda environment. One-time use.
+Replace `<COMPUTE_NODE>` with the node you got in Step 1 (e.g. `a100gpu6`).
 
+**Do not run multiple `ssh -L ...` commands.** You only need **one** tunnel from your laptop.
 
-#### Step 4: Navigate to Project Root
-e.g.
-```bash
-cd ~/Bproj/Bachelor-s-Project/Bachelor-s-Project
-```
+---
 
-Use `mkdir` command to create a new folder to save this in.
-`Bachelor-s-Project` is an example only. Change with the name of your created directory.
+### Step 7 — Open the app in your browser (on your laptop)
+Visit:
+- http://127.0.0.1:5000
+(or `http://localhost:5000`)
 
-#### Step 5: Start LLM Server
+---
 
-```bash
-cd LLM
-python llm_server.py > llm_server.log 2>&1 &
-```
+## Quick troubleshooting
 
-#### Step 6: Start Flask Web App
+### “Connection refused” to localhost:8000
+- On the compute node, verify:
+  ```bash
+  ss -tulpn | egrep ':5000|:8000'
+  ```
+  You should see `python` listening on both ports.
 
-```bash
-cd ../App/webapp
-python app.py > webapp.log 2>&1 &
-```
+### LLM box says “No reply” / errors
+- Check LLM logs in the tmux pane running `llm_server.py`
+- Verify the endpoint responds on the compute node:
+  ```bash
+  curl -s -X POST http://127.0.0.1:8000/generate -H 'Content-Type: application/json' -d '{"prompt":"test","max_new_tokens":50}'
+  ```
 
-#### Step 7: Verify Both Services are Running
-
-```bash
-tail webapp.log
-```
-
-You should see:
-```
-* Running on http://...:5000
-* Running on http://...:5000
-```
-
-#### Step 8: Access the Application
-
-Open a browser on your local machine and go to:
-```
-http://127.0.0.1:5000/
-```
-or
-```
-http://localhost:5000/
-```

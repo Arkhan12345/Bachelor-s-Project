@@ -19,8 +19,15 @@
       <div class="toolbar">
         <div class="grow">
           <label for="gene">Gene</label>
-          <input type="text" id="gene" name="gene" value="{{ gene_display or gene }}" list="gene_options" autocomplete="off" />
-          <datalist id="gene_options"></datalist>
+          <div class="gene-field">
+            <input id="gene"
+                  name="gene"
+                  type="text"
+                  value="{{ gene_display or gene }}"
+                  autocomplete="off"
+                  placeholder="e.g., TP53 or 7157 or tumor protein p53" />
+            <div id="gene_dropdown" class="suggestions hidden" role="listbox"></div>
+          </div>
           <input type="hidden" id="entrez" name="entrez" value="{{ entrez }}" />
           <input type="hidden" id="symbol" name="symbol" value="{{ gene }}" />
           <input type="hidden" id="genetitle" name="genetitle" value="{{ genetitle }}" />
@@ -216,50 +223,6 @@
 </div>
 
 <script>
-/* Gene autocomplete */
-(function(){
-  const geneInput = document.getElementById('gene');
-  const datalist = document.getElementById('gene_options');
-  const entrez = document.getElementById('entrez');
-  const symbol = document.getElementById('symbol');
-  const genetitle = document.getElementById('genetitle');
-  let lastItems = [];
-  let timer;
-
-  geneInput.addEventListener('input', function(){
-    const q = geneInput.value.trim();
-    entrez.value = '';
-    symbol.value = '';
-    genetitle.value = '';
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(async () => {
-      if (!q) { datalist.innerHTML = ''; lastItems = []; return; }
-      try {
-        const res = await fetch(`{{ url_for('api_gene_suggest') }}?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        lastItems = data.items || [];
-        datalist.innerHTML = '';
-        for (const it of lastItems) {
-          const opt = document.createElement('option');
-          opt.value = it.label;
-          datalist.appendChild(opt);
-        }
-      } catch (e) {}
-    }, 200);
-  });
-
-  geneInput.addEventListener('change', function(){
-    const val = geneInput.value.trim();
-    const hit = lastItems.find(it => it.label === val);
-    if (hit) {
-      entrez.value = hit.entrez || '';
-      symbol.value = hit.symbol || '';
-      genetitle.value = hit.genetitle || '';
-      geneInput.value = hit.label;
-    }
-  });
-})();
-
 (function(){
   const list = document.getElementById('ic_list');
   const sortSel = document.getElementById('ic_sort');
@@ -355,7 +318,8 @@ if (icInput && icClear) {
     container.innerHTML = '';
     status.textContent = 'Fetching...';
 
-    const geneVal = document.getElementById('symbol').value || document.getElementById('gene').value || '';
+    const raw = (document.getElementById('gene').value || '').trim();
+    const geneVal = raw.split(' ')[0]; // takes "ATAD3A" from "ATAD3A (55210) — ..."
     try {
       const max = parseInt(pubMax.value) || 5;
       const res = await fetch(`/api/gene_publications?gene=${encodeURIComponent(geneVal)}&max=${max}`);
@@ -420,5 +384,7 @@ if (icInput && icClear) {
   function truncate(s, n){ if(!s) return ''; return s.length>n ? s.slice(0,n)+'...' : s; }
 })();
 </script>
+
+<script src="{{ url_for('static', filename='search.js') }}"></script>
 
 {% endblock %}

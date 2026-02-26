@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Union, Optional
 import re
 
+import xml.etree.ElementTree as ET
+from urllib.parse import quote
+
 import uuid
 import pandas as pd
 
@@ -122,31 +125,96 @@ def _find_gene(gene_query: Optional[str] = None,
 
 
 def fetch_publications(query: str, max_results: int = 10):
-    url = "https://pubmed.ncbi.nlm.nih.gov/"
-    params = {
-        "query": query,
-        "format": "json",
-        "pageSize": max_results,
-        "sort": "date"
+    """
+    Fetch PubMed papers using NCBI E-utilities:
+      1) esearch -> get PMIDs
+      2) efetch  -> get title/abstract/authors/journal/year/doi
+    """
+    query = (query or "").strip()
+    if not query:
+        return []
+
+    # 1) ESearch: get PMIDs
+    esearch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+    es_params = {
+        "db": "pubmed",
+        "term": query,
+        "retmode": "json",
+        "retmax": str(max_results),
+        "sort": "date",
     }
-    r = requests.get(url, params=params, timeout=15)
+    r = requests.get(esearch_url, params=es_params, timeout=15)
     r.raise_for_status()
-    data = r.json()
+    es = r.json()
+    pmids = (es.get("esearchresult", {}).get("idlist") or [])
+    if not pmids:
+        return []
+
+    # 2) EFetch: fetch metadata as XML
+    efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+    ef_params = {
+        "db": "pubmed",
+        "id": ",".join(pmids),
+        "retmode": "xml",
+    }
+    r2 = requests.get(efetch_url, params=ef_params, timeout=20)
+    r2.raise_for_status()
+
+    root = ET.fromstring(r2.text)
     results = []
-    for rec in data.get("resultList", {}).get("result", []):
-        # abstracts can be missing; prefer abstractText or abstract
-        abstract = rec.get("abstractText") or rec.get("abstract")
+
+    for article in root.findall(".//PubmedArticle"):
+        pmid = (article.findtext(".//PMID") or "").strip()
+
+        title = (article.findtext(".//ArticleTitle") or "").strip()
+
+        # Abstract can be multiple sections
+        abs_parts = []
+        for ab in article.findall(".//Abstract/AbstractText"):
+            label = ab.attrib.get("Label")
+            txt = "".join(ab.itertext()).strip()
+            if txt:
+                abs_parts.append(f"{label}: {txt}" if label else txt)
+        abstract = "\n".join(abs_parts).strip()
+
+        journal = (article.findtext(".//Journal/Title") or "").strip()
+
+        # Year: try PubDate/Year then MedlineDate
+        year = (article.findtext(".//JournalIssue/PubDate/Year") or "").strip()
+        if not year:
+            medline = (article.findtext(".//JournalIssue/PubDate/MedlineDate") or "").strip()
+            year = medline[:4] if medline[:4].isdigit() else ""
+
+        # Authors: "LastName Initials"
+        author_list = []
+        for a in article.findall(".//AuthorList/Author"):
+            last = (a.findtext("LastName") or "").strip()
+            initials = (a.findtext("Initials") or "").strip()
+            collective = (a.findtext("CollectiveName") or "").strip()
+            if collective:
+                author_list.append(collective)
+            elif last:
+                author_list.append(f"{last} {initials}".strip())
+        authors = ", ".join(author_list[:12])  # cap for UI
+
+        # DOI if present
+        doi = ""
+        for aid in article.findall(".//ArticleIdList/ArticleId"):
+            if aid.attrib.get("IdType") == "doi":
+                doi = (aid.text or "").strip()
+                break
+
         results.append({
-            "id": rec.get("id"),
-            "pmid": rec.get("pmid"),
-            "title": rec.get("title"),
-            "abstract": (abstract or "").strip(),
-            "authors": rec.get("authorString"),
-            "year": rec.get("pubYear"),
-            "source": rec.get("journalTitle"),
-            "doi": rec.get("doi"),
-            "url": rec.get("fullTextUrlList", {}).get("fullTextUrl", [{}])[0].get("url")
+            "pmid": pmid,
+            "title": title,
+            "abstract": abstract,
+            "authors": authors,
+            "year": year,
+            "source": journal,
+            "doi": doi,
+            "url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else "",
         })
+
     return results
 
 
@@ -548,7 +616,10 @@ def api_gene_publications():
     if not gene:
         return jsonify({"error": "Missing gene parameter"}), 400
 
-    query = f'{gene}'
+    raw = gene
+    m = re.match(r"^\s*([^()\s]+)", raw)
+    symbol = m.group(1) if m else raw
+    query = f'{symbol}[Title/Abstract] AND hasabstract[text]'
 
     try:
         pubs = fetch_publications(query, max_results=max_results)

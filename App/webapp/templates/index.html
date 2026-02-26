@@ -22,14 +22,15 @@
 
         <div class="grow">
           <label for="gene">Gene (EntrezID, Symbol, or Gene title)</label>
-          <input type="text"
-                 id="gene"
-                 name="gene"
-                 placeholder="e.g., TP53 or 7157 or tumor protein p53"
-                 list="gene_options"
-                 autocomplete="off"
-                 required />
-          <datalist id="gene_options"></datalist>
+          <div class="gene-field">
+            <input type="text"
+                  id="gene"
+                  name="gene"
+                  placeholder="e.g., TP53 or 7157 or tumor protein p53"
+                  autocomplete="off"
+                  required />
+            <div id="gene_dropdown" class="suggestions hidden" role="listbox"></div>
+          </div>
           <input type="hidden" id="entrez" name="entrez" />
           <input type="hidden" id="symbol" name="symbol" />
           <input type="hidden" id="genetitle" name="genetitle" />
@@ -43,49 +44,7 @@
   </div>
 </div>
 
-<script>
-(function(){
-  const geneInput = document.getElementById('gene');
-  const datalist = document.getElementById('gene_options');
-  const entrez = document.getElementById('entrez');
-  const symbol = document.getElementById('symbol');
-  const genetitle = document.getElementById('genetitle');
-  let lastItems = [];
-  let timer;
 
-  geneInput.addEventListener('input', function(){
-    const q = geneInput.value.trim();
-    entrez.value = '';
-    symbol.value = '';
-    genetitle.value = '';
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(async () => {
-      if (!q) { datalist.innerHTML = ''; lastItems = []; return; }
-      try {
-        const res = await fetch(`{{ url_for('api_gene_suggest') }}?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        lastItems = data.items || [];
-        datalist.innerHTML = '';
-        for (const it of lastItems) {
-          const opt = document.createElement('option');
-          opt.value = it.label;
-          datalist.appendChild(opt);
-        }
-      } catch (e) {}
-    }, 200);
-  });
 
-  geneInput.addEventListener('change', function(){
-    const val = geneInput.value.trim();
-    const hit = lastItems.find(it => it.label === val);
-    if (hit) {
-      entrez.value = hit.entrez || '';
-      symbol.value = hit.symbol || '';
-      genetitle.value = hit.genetitle || '';
-      geneInput.value = hit.label;
-    }
-  });
-})();
-</script>
-
+<script src="{{ url_for('static', filename='search.js') }}"></script>
 {% endblock %}
