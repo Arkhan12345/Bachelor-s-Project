@@ -59,27 +59,6 @@
     </form>
   </div>
 
-  <!-- Publications -->
-  <div class="card">
-    <div class="section-head">
-      <h3 class="section-title">Publications & LLM summary</h3>
-    </div>
-
-    <div class="row">
-      <div class="col-auto" style="max-width: 120px;">
-        <label for="pub_max">Max</label>
-        <input type="number" id="pub_max" value="5" min="1" max="20" />
-      </div>
-      <div class="col-auto" style="display:flex; gap:0.5rem; align-items:end;">
-        <button id="fetch_pubs_btn" class="secondary" type="button">Fetch & summarize</button>
-      </div>
-      <div class="col">
-        <div id="pub_status" class="muted small" style="padding-bottom:0.2rem;"></div>
-      </div>
-    </div>
-
-    <div id="publications_container" style="margin-top:0.75rem;"></div>
-  </div>
 
   {% if error %}
     <div class="error">{{ error }}</div>
@@ -127,12 +106,13 @@
               {% endif %}
               <div class="summary-row">
                 <div class="left">
-                  <strong>
-                    <a href="{{ url_for('ic_detail', ic_name=rec.IC, threshold=threshold, gene=gene) }}">
-                      {{ rec.IC }}
-                    </a>
-                  </strong>
+                  <strong>{{ rec.IC }}</strong>
                   <span class="muted small">Loading: {{ '%.3f'|format(rec.Loading) }}</span>
+
+                  <a class="secondary small-btn"
+                    href="{{ url_for('ic_detail', ic_name=rec.IC, threshold=threshold, gene=gene) }}">
+                    Detailed analysis
+                  </a>
                 </div>
                 <span class="ic-expand">
                   <span class="ic-expand-text">Expand</span>
@@ -151,7 +131,6 @@
                       <thead>
                         <tr>
                           <th>Pathway</th>
-                          <th>Description</th>
                           <th class="nowrap">MSigDB</th>
                           <th class="num">Score</th>
                           <th class="nowrap">Direction</th>
@@ -163,7 +142,6 @@
                             <td>
                               <a href="{{ url_for('pathway_ics', pathway_name=k, threshold=threshold) }}">{{ k }}</a>
                             </td>
-                            <td class="muted">—</td>
                             <td class="nowrap">
                               <a href="http://www.broadinstitute.org/gsea/msigdb/cards/{{ k }}"
                                  target="_blank" rel="noopener noreferrer">View</a>
@@ -223,6 +201,12 @@
 </div>
 
 <script>
+document.querySelectorAll('.small-btn').forEach(btn => {
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+  });
+});
+
 (function(){
   const list = document.getElementById('ic_list');
   const sortSel = document.getElementById('ic_sort');
@@ -305,84 +289,6 @@ if (icInput && icClear) {
   });
 })();
 
-/* Publications UI */
-(function(){
-  const fetchBtn = document.getElementById('fetch_pubs_btn');
-  const status = document.getElementById('pub_status');
-  const container = document.getElementById('publications_container');
-  const pubMax = document.getElementById('pub_max');
-
-  if (!fetchBtn) return;
-
-  fetchBtn.addEventListener('click', async function(){
-    container.innerHTML = '';
-    status.textContent = 'Fetching...';
-
-    const raw = (document.getElementById('gene').value || '').trim();
-    const geneVal = raw.split(' ')[0]; // takes "ATAD3A" from "ATAD3A (55210) — ..."
-    try {
-      const max = parseInt(pubMax.value) || 5;
-      const res = await fetch(`/api/gene_publications?gene=${encodeURIComponent(geneVal)}&max=${max}`);
-      if (!res.ok) {
-        const err = await res.json().catch(()=>({}));
-        status.textContent = err.error || 'Failed to fetch publications';
-        return;
-      }
-      const data = await res.json();
-      status.textContent = '';
-
-      const pubs = data.publications || [];
-      const summary = data.llm_summary || '';
-
-      const summaryCard = document.createElement('div');
-      summaryCard.className = 'card';
-      summaryCard.style.boxShadow = 'none';
-      summaryCard.style.marginTop = '0.5rem';
-      summaryCard.innerHTML = `<h4 style="margin:0 0 0.5rem;">LLM summary</h4>
-        <pre style="white-space:pre-wrap; margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.9rem;">${escapeHtml(summary)}</pre>`;
-      container.appendChild(summaryCard);
-
-      const listWrap = document.createElement('div');
-      listWrap.style.marginTop = '0.75rem';
-      listWrap.innerHTML = `<h4 style="margin:0 0 0.5rem;">Publications (${pubs.length})</h4>`;
-      const grid = document.createElement('div');
-      grid.style.display = 'grid';
-      grid.style.gap = '0.6rem';
-
-      pubs.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.boxShadow = 'none';
-        const title = p.title || '(no title)';
-        const year = p.year || '';
-        const authors = p.authors || '';
-        const abs = p.abstract || '';
-        const url = (p.doi ? `https://doi.org/${p.doi}` : (p.url || ''));
-        card.innerHTML = `<strong>${escapeHtml(title)}</strong>
-          <span class="muted"> (${escapeHtml(year)})</span>
-          <div class="muted small" style="margin-top:0.2rem;">${escapeHtml(authors)}</div>
-          <div class="small" style="margin-top:0.5rem;">${escapeHtml(truncate(abs, 420))}</div>
-          ${url ? `<div style="margin-top:0.5rem;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View source</a></div>` : ''}`;
-        grid.appendChild(card);
-      });
-
-      listWrap.appendChild(grid);
-      container.appendChild(listWrap);
-
-    } catch (err) {
-      status.textContent = 'Error fetching publications';
-      console.error(err);
-    }
-  });
-
-  function escapeHtml(s) {
-    if (!s) return '';
-    return s.replace(/[&<>"']/g, function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
-    });
-  }
-  function truncate(s, n){ if(!s) return ''; return s.length>n ? s.slice(0,n)+'...' : s; }
-})();
 </script>
 
 <script src="{{ url_for('static', filename='search.js') }}"></script>

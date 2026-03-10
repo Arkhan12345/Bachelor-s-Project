@@ -23,88 +23,190 @@
 
   <div id="llm-judgement-text" style="display:none;"></div>
 
-  <div class="detail-grid">
+<div class="detail-grid">
 
-    <!-- LEFT: judgement + chat -->
-    <div class="stack">
-      <div class="card">
-        <div class="section-head">
-          <h3 class="section-title">LLM Overall Judgement</h3>
-          <span class="muted small">Auto-generated</span>
+  <!-- LEFT -->
+  <div class="stack">
+    <div class="card">
+      <div class="section-head">
+        <h3 class="section-title">Publications & LLM summary</h3>
+      </div>
+      <div class="row">
+        <div class="col-auto" style="max-width: 120px;">
+          <label for="pub_max">Max</label>
+          <input type="number" id="pub_max" value="5" min="1" max="20" />
         </div>
-
-        <div id="llm-summary-text" class="muted" style="min-height: 3rem; white-space: pre-wrap;">
-          Loading assistant judgement...
+        <div class="col-auto" style="display:flex; gap:0.5rem; align-items:end;">
+          <button id="fetch_pubs_btn" class="secondary" type="button">Fetch & summarize</button>
         </div>
-
-        <div style="margin-top: 0.75rem; display: flex; gap: 0.6rem; flex-wrap: wrap;">
-          <button type="button" id="llm-summary-retry" class="button secondary">Retry summary</button>
-          <button type="button" id="chat-open" class="button">Continue chat</button>
+        <div class="col">
+          <div id="pub_status" class="muted small" style="padding-bottom:0.2rem;"></div>
         </div>
       </div>
 
-      <div class="card" id="chat-widget">
-        <div id="chat-panel" class="hidden">
-          <div id="chat-header">
-            <span>Assistant</span>
-            <button id="chat-close" type="button" aria-label="Close">✕</button>
-          </div>
+      <div id="publications_container" style="margin-top:0.75rem;"></div>
+    </div>
 
-          <div id="chat-messages"></div>
+    <div class="card">
+      <div class="section-head">
+        <h3 class="section-title">LLM Overall Judgement</h3>
+        <span class="muted small">Auto-generated</span>
+      </div>
 
-          <form id="chat-form">
-            <input id="chat-input" type="text" placeholder="Ask something..." autocomplete="off" />
-            <button type="submit">Send</button>
-          </form>
-        </div>
+      <div id="llm-summary-text" class="muted" style="min-height: 3rem; white-space: pre-wrap;">
+        Loading assistant judgement...
+      </div>
 
-        <div id="chat-collapsed-hint" class="muted small">
-          Click <strong>Continue chat</strong> to ask follow-up questions about this IC.
-        </div>
+      <div style="margin-top: 0.75rem; display: flex; gap: 0.6rem; flex-wrap: wrap;">
+        <button type="button" id="llm-summary-retry" class="button secondary">Retry summary</button>
+        <button type="button" id="chat-open" class="button">Continue chat</button>
       </div>
     </div>
 
-    <!-- RIGHT: plots -->
-    <div class="stack">
-      {% if enrichment_plot %}
-        <div class="card">
-          <h3 class="section-title" style="margin:0 0 0.75rem;">Pathway Enrichment</h3>
-          <div style="text-align:center;">
-            <img src="{{ enrichment_plot }}" alt="Gene Enrichment Plot" style="max-width:100%; height:auto;" />
-          </div>
+    <div class="card" id="chat-widget">
+      <div id="chat-panel" class="hidden">
+        <div id="chat-header">
+          <span>Assistant</span>
+          <button id="chat-close" type="button" aria-label="Close">✕</button>
         </div>
-      {% else %}
-        <div class="card">
-          <h3 class="section-title" style="margin:0 0 0.5rem;">Pathway Enrichment</h3>
-          <p class="muted">No significant pathway enrichments found at this threshold, or matplotlib is not installed.</p>
-        </div>
-      {% endif %}
 
-      {% if annotation_plots %}
-        <div class="card">
-          <h3 class="section-title" style="margin:0 0 0.75rem;">Sample Annotations</h3>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap: 1rem;">
-            {% for plot_name, plot_data in annotation_plots.items() %}
-              <div style="text-align:center;">
-                <h4 style="text-transform: capitalize; margin:0 0 0.5rem;">{{ plot_name.replace('_', ' ') }}</h4>
-                <img src="{{ plot_data }}" alt="{{ plot_name }}" style="max-width:100%; height:auto;" />
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      {% else %}
-        <div class="card">
-          <h3 class="section-title" style="margin:0 0 0.5rem;">Sample Annotations</h3>
-          <p class="muted">No sample annotation data available at this threshold, or matplotlib is not installed.</p>
-        </div>
-      {% endif %}
+        <div id="chat-messages"></div>
+
+        <form id="chat-form">
+          <input id="chat-input" type="text" placeholder="Ask something..." autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+
+      <div id="chat-collapsed-hint" class="muted small">
+        Click <strong>Continue chat</strong> to ask follow-up questions about this IC.
+      </div>
     </div>
-
   </div>
+
+  <!-- RIGHT -->
+  <div class="stack">
+    {% if enrichment_plot %}
+      <div class="card">
+        <h3 class="section-title" style="margin:0 0 0.75rem;">Pathway Enrichment</h3>
+        <div style="text-align:center;">
+          <img src="{{ enrichment_plot }}" alt="Gene Enrichment Plot" style="max-width:100%; height:auto;" />
+        </div>
+      </div>
+    {% else %}
+      <div class="card">
+        <h3 class="section-title" style="margin:0 0 0.5rem;">Pathway Enrichment</h3>
+        <p class="muted">No significant pathway enrichments found at this threshold, or matplotlib is not installed.</p>
+      </div>
+    {% endif %}
+
+    {% if annotation_plots %}
+      <div class="card">
+        <h3 class="section-title" style="margin:0 0 0.75rem;">Sample Annotations</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap: 1rem;">
+          {% for plot_name, plot_data in annotation_plots.items() %}
+            <div style="text-align:center;">
+              <h4 style="text-transform: capitalize; margin:0 0 0.5rem;">{{ plot_name.replace('_', ' ') }}</h4>
+              <img src="{{ plot_data }}" alt="{{ plot_name }}" style="max-width:100%; height:auto;" />
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="card">
+        <h3 class="section-title" style="margin:0 0 0.5rem;">Sample Annotations</h3>
+        <p class="muted">No sample annotation data available at this threshold, or matplotlib is not installed.</p>
+      </div>
+    {% endif %}
+  </div>
+
 </div>
 
 <script src="{{ url_for('static', filename='chat.js') }}"></script>
 <script>
+
+/* Publications UI */
+(function(){
+  const fetchBtn = document.getElementById('fetch_pubs_btn');
+  const status = document.getElementById('pub_status');
+  const container = document.getElementById('publications_container');
+  const pubMax = document.getElementById('pub_max');
+
+  if (!fetchBtn) return;
+
+  fetchBtn.addEventListener('click', async function(){
+    container.innerHTML = '';
+    status.textContent = 'Fetching...';
+
+    const icName = "{{ ic_name }}";
+    const geneVal = "{{ gene or '' }}".trim();
+    const threshold = "{{ '%.2f'|format(threshold) }}";
+    try {
+      const max = parseInt(pubMax.value) || 5;
+      const res = await fetch(
+        `/api/ic_publications?ic=${encodeURIComponent(icName)}&gene=${encodeURIComponent(geneVal)}&threshold=${encodeURIComponent(threshold)}&max=${max}`
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        status.textContent = err.error || 'Failed to fetch publications';
+        return;
+      }
+      const data = await res.json();
+      status.textContent = '';
+
+      const pubs = data.publications || [];
+      const summary = data.llm_summary || '';
+
+      const summaryCard = document.createElement('div');
+      summaryCard.className = 'card';
+      summaryCard.style.boxShadow = 'none';
+      summaryCard.style.marginTop = '0.5rem';
+      summaryCard.innerHTML = `<h4 style="margin:0 0 0.5rem;">LLM summary</h4>
+        <pre style="white-space:pre-wrap; margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.9rem;">${escapeHtml(summary)}</pre>`;
+      container.appendChild(summaryCard);
+
+      const listWrap = document.createElement('div');
+      listWrap.style.marginTop = '0.75rem';
+      listWrap.innerHTML = `<h4 style="margin:0 0 0.5rem;">Publications (${pubs.length})</h4>`;
+      const grid = document.createElement('div');
+      grid.style.display = 'grid';
+      grid.style.gap = '0.6rem';
+
+      pubs.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.boxShadow = 'none';
+        const title = p.title || '(no title)';
+        const year = p.year || '';
+        const authors = p.authors || '';
+        const abs = p.abstract || '';
+        const url = (p.doi ? `https://doi.org/${p.doi}` : (p.url || ''));
+        card.innerHTML = `<strong>${escapeHtml(title)}</strong>
+          <span class="muted"> (${escapeHtml(year)})</span>
+          <div class="muted small" style="margin-top:0.2rem;">${escapeHtml(authors)}</div>
+          <div class="small" style="margin-top:0.5rem;">${escapeHtml(truncate(abs, 420))}</div>
+          ${url ? `<div style="margin-top:0.5rem;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View source</a></div>` : ''}`;
+        grid.appendChild(card);
+      });
+
+      listWrap.appendChild(grid);
+      container.appendChild(listWrap);
+
+    } catch (err) {
+      status.textContent = 'Error fetching publications';
+      console.error(err);
+    }
+  });
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
+    });
+  }
+  function truncate(s, n){ if(!s) return ''; return s.length>n ? s.slice(0,n)+'...' : s; }
+})();
+
 (function(){
   const summaryEl = document.getElementById('llm-summary-text');
   const retryBtn = document.getElementById('llm-summary-retry');
@@ -121,7 +223,8 @@
     gene: "{{ gene or '' }}",
     hasEnrichment: {{ 'true' if enrichment_plot else 'false' }},
     annotationNames: {{ annotation_plots.keys()|list|tojson if annotation_plots else '[]' }},
-    topPathways: {{ top_pathways|tojson if top_pathways else '[]' }}
+    topPathways: {{ top_pathways|tojson if top_pathways else '[]' }},
+    annotationSummary: {{ annotation_summary|tojson if annotation_summary else '[]' }}
   };
 
   async function fetchSummary() {
@@ -136,7 +239,8 @@
           gene: ctx.gene,
           hasEnrichment: ctx.hasEnrichment,
           annotationNames: ctx.annotationNames,
-          topPathways: ctx.topPathways
+          topPathways: ctx.topPathways,
+          annotationSummary: ctx.annotationSummary
         })
       });
 

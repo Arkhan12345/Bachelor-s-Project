@@ -23,6 +23,31 @@ Archive/                # Reference data files
 
 ---
 
+On VSCode, install the Remote SSH Extension.
+To connect to the cluster press Ctrl + Shift + P and type "Remote-SSH: Connect to Host".
+Select "Add New SSH Host" and enter "ssh <USERNAME>@interactive1.hb.hpc.rug.nl".
+VS Code will ask where to save the SSH configuration.
+Choose the default file.
+
+Now connect to the cluster:
+
+"Remote-SSH: Connect to Host"
+
+Select:
+
+"interactive1.hb.hpc.rug.nl"
+
+Enter your password.
+After connecting, VS Code will open a new window connected to the cluster.
+
+In the remote VS Code window clone the github repository.
+
+-Run on other cluster
+
+-Run Locally
+
+-linux/mac
+
 ## Restart from zero (stop everything cleanly)
 
 ### A) On the GPU node (inside your `srun` shell)

@@ -386,18 +386,23 @@ def pathway_ics(pathway_name):
 def ic_detail(ic_name):
     threshold = request.args.get("threshold", default=3, type=float)
     gene = request.args.get("gene", type=str)
-    
+
     # Generate plots
     enrichment_plot = generate_ic_enrichment_plot(ic_name, threshold)
     annotation_plots = generate_ic_sample_annotation_plots(ic_name, threshold)
-    
+    top_pathways = get_top_pathways_for_ic(ic_name, threshold, top_k=10)
+
+    # NEW: create text summary of annotation patterns
+    annotation_summary = summarize_annotation_patterns(ic_name, threshold)
+
     print(f"\n=== FLASK DEBUG ===")
     print(f"IC: {ic_name}, Threshold: {threshold}")
     print(f"Enrichment plot exists: {enrichment_plot is not None}")
     print(f"Annotation plots type: {type(annotation_plots)}")
     print(f"Annotation plots: {annotation_plots.keys() if annotation_plots else 'empty/None'}")
+    print(f"Annotation summary: {annotation_summary}")
     print(f"=== END FLASK DEBUG ===\n")
-    top_pathways = get_top_pathways_for_ic(ic_name, threshold, top_k=10)
+
     return render_template(
         "ic_detail.html",
         ic_name=ic_name,
@@ -405,9 +410,190 @@ def ic_detail(ic_name):
         gene=gene,
         enrichment_plot=enrichment_plot,
         annotation_plots=annotation_plots,
-        top_pathways=top_pathways
+        top_pathways=top_pathways,
+        annotation_summary=annotation_summary
     )
+    
+@app.route("/api/ic_publications")
+def api_ic_publications():
+    ic_name = request.args.get("ic", type=str, default="").strip()
+    gene = request.args.get("gene", type=str, default="").strip()
+    threshold = request.args.get("threshold", type=float, default=3.0)
+    max_results = request.args.get("max", type=int, default=10)
 
+    if not ic_name:
+        return jsonify({"error": "Missing ic parameter"}), 400
+
+    try:
+        top_pathways = get_top_pathways_for_ic(ic_name, threshold, top_k=5)
+    except Exception as e:
+        return jsonify({"error": "Failed to get IC pathways", "detail": str(e)}), 500
+
+    pathway_terms = []
+    for item in top_pathways[:3]:
+        if isinstance(item, (list, tuple)) and len(item) >= 1:
+            pathway_name = str(item[0]).replace("HALLMARK_", "").replace("_", " ").strip()
+            if pathway_name:
+                pathway_terms.append(f'"{pathway_name}"[Title/Abstract]')
+
+    query_parts = []
+    if gene:
+        query_parts.append(f'"{gene}"[Title/Abstract]')
+
+    if pathway_terms:
+        query_parts.append("(" + " OR ".join(pathway_terms) + ")")
+
+    if not query_parts:
+        return jsonify({"error": "No usable IC context for literature search"}), 400
+
+    query = " AND ".join(query_parts) + " AND hasabstract[text]"
+
+    try:
+        pubs = fetch_publications(query, max_results=max_results)
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch publications", "detail": str(e)}), 500
+
+    try:
+        llm_summary = summarize_publications(pubs, max_papers_for_llm=5)
+    except Exception as e:
+        llm_summary = f"LLM summary failed: {e}"
+
+    return jsonify({
+        "ic": ic_name,
+        "gene": gene,
+        "query": query,
+        "top_pathways": top_pathways,
+        "publications": pubs,
+        "llm_summary": llm_summary
+    })
+
+def summarize_annotation_patterns(ic_name, threshold):
+    summaries = []
+
+    try:
+        archive_dir = APP_DIR.parent / "Archive"
+
+        sample_path = archive_dir / "sample_annotations.txt"
+        mixing_path = archive_dir / "mixing_matrix.txt"
+
+        # Load sample annotations
+        sample_ann = pd.read_csv(sample_path, sep="\t")
+
+        # Load mixing matrix: ICs are rows, sample IDs are columns
+        mixing = pd.read_csv(mixing_path, sep="\t", index_col=0)
+
+        if ic_name not in mixing.index:
+            return [f"{ic_name}: IC scores not found in mixing matrix."]
+
+        # Extract scores for this IC
+        ic_scores = mixing.loc[ic_name].reset_index()
+        ic_scores.columns = ["sample_id", "ic_score"]
+
+        # In your sample_annotations file, the sample IDs are in the 'Type' column
+        merged = sample_ann.merge(ic_scores, left_on="Type", right_on="sample_id", how="inner")
+
+        if merged.empty:
+            return ["No overlapping sample annotation data found."]
+
+        # Use top/bottom 20% rather than threshold, because IC scores are small
+        high_cut = merged["ic_score"].quantile(0.80)
+        low_cut = merged["ic_score"].quantile(0.20)
+
+        high = merged[merged["ic_score"] >= high_cut].copy()
+        low = merged[merged["ic_score"] <= low_cut].copy()
+
+        if high.empty or low.empty:
+            return ["Could not define high- and low-scoring IC sample groups."]
+
+        # Age
+        if "Age" in merged.columns:
+            high_age = pd.to_numeric(high["Age"], errors="coerce").dropna()
+            low_age = pd.to_numeric(low["Age"], errors="coerce").dropna()
+
+            if not high_age.empty and not low_age.empty:
+                summaries.append(
+                    f"Age: high-IC samples have mean age {high_age.mean():.1f}, versus {low_age.mean():.1f} in low-IC samples."
+                )
+
+        # Stage
+        if "Stage" in merged.columns:
+            high_stage = high["Stage"].dropna().astype(str)
+            low_stage = low["Stage"].dropna().astype(str)
+
+            if not high_stage.empty and not low_stage.empty:
+                high_top = high_stage.value_counts(normalize=True)
+                low_top = low_stage.value_counts(normalize=True)
+
+                if not high_top.empty:
+                    summaries.append(
+                        f"Stage: the most common stage among high-IC samples is {high_top.index[0]} ({high_top.iloc[0]*100:.1f}%)."
+                    )
+                if not low_top.empty:
+                    summaries.append(
+                        f"Stage comparison: the most common stage among low-IC samples is {low_top.index[0]} ({low_top.iloc[0]*100:.1f}%)."
+                    )
+
+        # Grade
+        if "Grade" in merged.columns:
+            high_grade = high["Grade"].dropna().astype(str)
+            if not high_grade.empty:
+                top_grade = high_grade.value_counts(normalize=True)
+                summaries.append(
+                    f"Grade: the most common grade among high-IC samples is {top_grade.index[0]} ({top_grade.iloc[0]*100:.1f}%)."
+                )
+
+        # Subtype
+        if "Subtype" in merged.columns:
+            high_sub = high["Subtype"].dropna().astype(str)
+            if not high_sub.empty:
+                top_sub = high_sub.value_counts(normalize=True)
+                summaries.append(
+                    f"Subtype: the most common subtype among high-IC samples is {top_sub.index[0]} ({top_sub.iloc[0]*100:.1f}%)."
+                )
+
+        # Type_updated is probably more biologically useful than Type
+        if "Type_updated" in merged.columns:
+            high_type = high["Type_updated"].dropna().astype(str)
+            if not high_type.empty:
+                top_type = high_type.value_counts(normalize=True)
+                summaries.append(
+                    f"Tumor type: the most common tumor category among high-IC samples is {top_type.index[0]} ({top_type.iloc[0]*100:.1f}%)."
+                )
+
+        # Survival / recurrence
+        if "Survival.status" in merged.columns:
+            high_surv = high["Survival.status"].dropna().astype(str)
+            if not high_surv.empty:
+                top_surv = high_surv.value_counts(normalize=True)
+                summaries.append(
+                    f"Survival status: among high-IC samples, the most common status is {top_surv.index[0]} ({top_surv.iloc[0]*100:.1f}%)."
+                )
+
+        if "Recurrence.status" in merged.columns:
+            high_rec = high["Recurrence.status"].dropna().astype(str)
+            if not high_rec.empty:
+                top_rec = high_rec.value_counts(normalize=True)
+                summaries.append(
+                    f"Recurrence: among high-IC samples, the most common recurrence category is {top_rec.index[0]} ({top_rec.iloc[0]*100:.1f}%)."
+                )
+
+        # Platinum / Taxol / Debulking
+        for col in ["Platinum", "Taxol", "Debulking"]:
+            if col in merged.columns:
+                vals = high[col].dropna().astype(str)
+                if not vals.empty:
+                    top_val = vals.value_counts(normalize=True)
+                    summaries.append(
+                        f"{col}: among high-IC samples, the most common category is {top_val.index[0]} ({top_val.iloc[0]*100:.1f}%)."
+                    )
+
+        if not summaries:
+            summaries.append("No structured annotation trends could be computed for this IC.")
+
+    except Exception as e:
+        summaries.append(f"Sample annotation summary unavailable: {e}")
+
+    return summaries
 
 @app.route("/summary", methods=["POST"])
 def summary():
@@ -420,28 +606,50 @@ def summary():
     annotation_names = data.get("annotationNames", [])
     top_pathways = data.get("topPathways") or []
     pathway_lines = "\n".join([f"- {name}: {score:+.3f}" for name, score in top_pathways]) or "none"
+    annotation_summary = data.get("annotationSummary") or []
+    annotation_summary_text = "\n".join(f"- {x}" for x in annotation_summary) if annotation_summary else "none"
 
 
     prompt = f"""
-        You are a biomedical research assistant interpreting Independent Component Analysis (ICA) results.
+    You are a biomedical research assistant interpreting Independent Component Analysis (ICA) results.
 
-        Component: {ic}
-        Threshold: {threshold}
-        Related gene: {gene}
+    Component: {ic}
+    Threshold: {threshold}
+    Related gene: {gene}
 
-        Enrichment plot available: {"yes" if has_enrichment else "no"}
-        Sample annotation plots: {", ".join(annotation_names) if annotation_names else "none"}
-        Top pathway enrichments:
-        {pathway_lines}
+    Enrichment plot available: {"yes" if has_enrichment else "no"}
+    Sample annotation plots: {", ".join(annotation_names) if annotation_names else "none"}
+    Top pathway enrichments:
+    {pathway_lines}
 
-        Provide a concise biological interpretation in 4-6 bullet points.
-        - Use '-' bullets only
-        - Do NOT number bullets
-        - Be specific and mechanistic where possible
+    Sample annotation evidence:
+    {annotation_summary_text}
 
-        ASSISTANT ANSWER:
-        -
-        """.strip()
+    Write 4-6 bullet points that:
+    - state the most likely biological interpretation of this IC
+    - mention the strongest pathway signals
+    - describe concrete sample-level patterns when supported by the annotation evidence
+    - explicitly mention subgroup trends such as age, sex, stage, tumor type, or other sample annotations if present
+    - only make claims that are supported by the provided evidence
+    - if annotation evidence is weak or unavailable, say that clearly
+    - prioritize the structured sample annotation evidence over generic speculation
+
+    Use '-' bullets only.
+    Do not number bullets.
+    Be concrete and specific.
+    Prefer statements like:
+    - 'Higher IC scores are concentrated in older patients'
+    - 'This component appears more active in ER-negative tumors'
+    - 'The age distribution does not show a strong separation'
+    - 'Stage information suggests enrichment in advanced disease'
+    Do not mention plots unless you are interpreting their contents.
+    - When evidence is strong, use phrases like 'suggests' or 'is consistent with'
+    - When evidence is weak, explicitly say 'no strong subgroup pattern is evident'
+    - Do not invent clinical associations that are not supported by the provided evidence
+
+    ASSISTANT ANSWER:
+    -
+    """.strip()
 
     try:
         payload = {
