@@ -47,5 +47,5 @@ def generate():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    print("Starting LLM server on port 8000...")
-    app.run(host="0.0.0.0", port=8000, debug=False)
+    print("Starting LLM server on port 8001...")
+    app.run(host="0.0.0.0", port=8001, debug=False)
