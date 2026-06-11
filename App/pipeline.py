@@ -11,7 +11,11 @@ ic = pd.read_csv(_ARCHIVE / "independent_components.txt", sep="\t", index_col=0)
 gsea = pd.read_csv(_ARCHIVE / "gsea_matrix.txt", sep=",", index_col=0)
 mixing = pd.read_csv(_ARCHIVE / "mixing_matrix.txt", sep="\t", index_col=0)
 genes = pd.read_csv(_ARCHIVE / "genomic_mapping.txt", sep="\t")
-meta = pd.read_csv(_ARCHIVE / "sample_annotations.txt", sep="\t")
+meta = pd.read_csv(_ARCHIVE / "sample_annotations.txt", sep="\t", index_col=0)
+
+meta.index = meta.index.astype(str).str.strip()
+mixing.index = mixing.index.astype(str).str.strip()
+mixing.columns = mixing.columns.astype(str).str.strip()
 
 
 try:
@@ -69,6 +73,25 @@ def filter_mixing_m(threshold: float = 0.1):
     return mixing_filtered
 
 
+def get_top_sample_annotations(ic_name: str, top_k: int = 10):
+    """Return metadata for the samples with the largest absolute score for an IC."""
+    if ic_name not in mixing.index:
+        return []
+
+    scores = pd.to_numeric(mixing.loc[ic_name], errors="coerce").dropna()
+    if scores.empty:
+        return []
+
+    top_scores = scores.reindex(scores.abs().sort_values(ascending=False).index).head(top_k)
+    sample_meta = meta.reindex(top_scores.index).dropna(how="all").copy()
+    if sample_meta.empty:
+        return []
+
+    sample_meta.insert(0, "sample_id", sample_meta.index)
+    sample_meta.insert(1, "ic_score", top_scores.reindex(sample_meta.index).values)
+    return sample_meta.to_dict(orient="records")
+
+
 def find_ic(gene_symbol, threshold: float = 3):
     # Find the gene ID
     gene_row = genes[genes["SYMBOL"] == gene_symbol]
@@ -91,8 +114,6 @@ def find_ic(gene_symbol, threshold: float = 3):
     results = []
 
     gsea_filtered = filter_gene_enrichment(threshold)
-    mixing_filtered = filter_mixing_m(0.1)
-
     for ic_name in strong_ics.index:
         # Top pathways for this IC (use the prefiltered GSEA matrix)
         if ic_name in gsea_filtered.columns:
@@ -100,20 +121,11 @@ def find_ic(gene_symbol, threshold: float = 3):
         else:
             gsea_hits = pd.Series(dtype=float)
 
-        # Top samples (most active) for this IC (use prefiltered mixing matrix)
-        if ic_name in mixing_filtered.index:
-            active_samples = mixing_filtered.loc[ic_name].dropna().sort_values(ascending=False).head(10)
-        else:
-            active_samples = pd.Series(dtype=float)
-
-        # Get metadata for these samples (empty if active_samples is empty)
-        sample_meta = meta.loc[meta.index.isin(active_samples.index)]
-
         results.append({
             "IC": ic_name,
             "Loading": strong_ics[ic_name],
             "Top_Pathways": gsea_hits.to_dict(),
-            "Top_Samples": sample_meta.to_dict(orient="records")
+            "Top_Samples": get_top_sample_annotations(ic_name)
         })
 
     return results
@@ -147,8 +159,6 @@ def find_pathway_ics(pathway_name, threshold: float = 3):
     
     # Get filtered matrices for top genes and samples
     ic_filtered = filter_ic(threshold)
-    mixing_filtered = filter_mixing_m(threshold)
-    
     for ic_name in strong_ics.index:
         # Top genes for this IC (genes with strong loadings)
         if ic_name in ic_filtered.columns:
@@ -167,19 +177,11 @@ def find_pathway_ics(pathway_name, threshold: float = 3):
         else:
             top_genes = []
         
-        # Top samples for this IC
-        if ic_name in mixing_filtered.index:
-            active_samples = mixing_filtered.loc[ic_name].dropna().sort_values(ascending=False).head(10)
-        else:
-            active_samples = pd.Series(dtype=float)
-        
-        sample_meta = meta.loc[meta.index.isin(active_samples.index)]
-        
         results.append({
             "IC": ic_name,
             "Score": strong_ics[ic_name],
             "Top_Genes": top_genes,
-            "Top_Samples": sample_meta.to_dict(orient="records")
+            "Top_Samples": get_top_sample_annotations(ic_name)
         })
     
     return results
@@ -276,120 +278,172 @@ def generate_ic_enrichment_plot(ic_name, threshold: float = 3): #param in webist
 
 def generate_ic_sample_annotation_plots(ic_name, threshold: float = 3, mixing_threshold: float = 0.1):
     """Generate sample annotation plots for a specific IC.
-    
+
     Args:
         ic_name: The IC to plot
         threshold: Threshold for gene/pathway filtering (not used here, kept for API consistency)
-        mixing_threshold: Threshold for sample activation filtering (default 0.1)
-    
+        mixing_threshold: Deprecated. Kept for compatibility; plots now use top/bottom
+            IC-score quantiles because fixed absolute cutoffs remove most ICs.
+
     Returns dict of plot names to base64-encoded image strings.
     """
-    print(f"\n=== DEBUG generate_ic_sample_annotation_plots ===")
-    print(f"IC: {ic_name}, Mixing Threshold: {mixing_threshold}")
-    
     if not MATPLOTLIB_AVAILABLE:
-        print("ERROR: Matplotlib not available")
         return {}
-    
-    # Filter mixing matrix to get only strong sample associations
-    mixing_filtered = filter_mixing_m(mixing_threshold)
-    print(f"Filtered mixing matrix shape: {mixing_filtered.shape}")
-    
-    if ic_name not in mixing_filtered.index:
-        print(f"ERROR: {ic_name} not in filtered index")
-        print(f"Available ICs (first 10): {mixing_filtered.index[:10].tolist()}")
+
+    if ic_name not in mixing.index:
         return {}
-    
-    # Get samples strongly associated with this IC (already filtered)
-    strong_samples = mixing_filtered.loc[ic_name].dropna()
-    print(f"Strong samples found: {len(strong_samples)}")
-    
-    if strong_samples.empty:
-        print("ERROR: No strong samples found")
+
+    scores = pd.to_numeric(mixing.loc[ic_name], errors="coerce").dropna()
+    if scores.empty:
         return {}
-    
-    # Get metadata for these samples
-    sample_indices = strong_samples.index
-    sample_meta = meta[meta.index.isin(sample_indices)].copy()
-    print(f"Sample metadata shape: {sample_meta.shape}")
-    print(f"Sample metadata columns: {sample_meta.columns.tolist()}")
-    
+
+    sample_meta = meta.reindex(scores.index).dropna(how="all").copy()
     if sample_meta.empty:
-        print("ERROR: No sample metadata found")
         return {}
-    
+    sample_meta["ic_score"] = scores.reindex(sample_meta.index)
+    sample_meta = sample_meta.dropna(subset=["ic_score"])
+    if sample_meta.empty:
+        return {}
+
+    low_cut = sample_meta["ic_score"].quantile(0.20)
+    high_cut = sample_meta["ic_score"].quantile(0.80)
+    low = sample_meta[sample_meta["ic_score"] <= low_cut].copy()
+    high = sample_meta[sample_meta["ic_score"] >= high_cut].copy()
+
+    if low.empty or high.empty:
+        return {}
+
+    low["IC score group"] = "Low 20%"
+    high["IC score group"] = "High 20%"
+    grouped = pd.concat([low, high], axis=0)
+
     plots = {}
-    
-    # Plot 1: Type distribution
-    if 'Type' in sample_meta.columns:
-        type_counts = sample_meta['Type'].value_counts()
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.hist(sample_meta["ic_score"], bins=30, color="#4c78a8", alpha=0.75, edgecolor="white")
+    ax.axvline(low_cut, color="#d62728", linestyle="--", linewidth=1.5, label="20th percentile")
+    ax.axvline(high_cut, color="#2ca02c", linestyle="--", linewidth=1.5, label="80th percentile")
+    ax.set_title(f"{ic_name}: IC Score Distribution", fontsize=12, fontweight="bold")
+    ax.set_xlabel("IC score", fontsize=10)
+    ax.set_ylabel("Sample count", fontsize=10)
+    ax.legend()
+    fig.tight_layout()
+    plots["ic_score_distribution"] = plot_to_base64(fig)
+
+    def add_grouped_count_plot(column, title=None):
+        if column not in grouped.columns:
+            return
+
+        counts = pd.crosstab(grouped[column].fillna("Unknown").astype(str), grouped["IC score group"])
+        counts = counts.reindex(columns=["Low 20%", "High 20%"], fill_value=0)
+        if counts.empty:
+            return
+
+        counts = counts.loc[counts.sum(axis=1).sort_values(ascending=False).index].head(12)
+        fig, ax = plt.subplots(figsize=(max(7, min(12, len(counts) * 0.85)), 5))
+        counts.plot(kind="bar", ax=ax, color=["#d62728", "#2ca02c"], alpha=0.75)
+        ax.set_title(title or f"{ic_name}: {column} by IC Score Group", fontsize=12, fontweight="bold")
+        ax.set_xlabel(column, fontsize=10)
+        ax.set_ylabel("Sample count", fontsize=10)
+        ax.tick_params(axis="x", rotation=35)
+        ax.legend(title="")
+        fig.tight_layout()
+        plots[f"{column.lower().replace('.', '_')}_by_score_group"] = plot_to_base64(fig)
+
+    for column in [
+        "Type_updated",
+        "Subtype",
+        "Stage",
+        "Grade",
+        "Recurrence.status",
+        "Survival.status",
+        "Debulking",
+    ]:
+        add_grouped_count_plot(column)
+
+    if "Age" in grouped.columns:
+        age_df = grouped.copy()
+        age_df["Age"] = pd.to_numeric(age_df["Age"], errors="coerce")
+        age_df = age_df.dropna(subset=["Age"])
+        if not age_df.empty:
+            fig, ax = plt.subplots(figsize=(8, 5))
+            age_groups = [
+                age_df.loc[age_df["IC score group"] == "Low 20%", "Age"].values,
+                age_df.loc[age_df["IC score group"] == "High 20%", "Age"].values,
+            ]
+            ax.boxplot(age_groups, labels=["Low 20%", "High 20%"], patch_artist=True)
+            ax.set_title(f"{ic_name}: Age by IC Score Group", fontsize=12, fontweight="bold")
+            ax.set_xlabel("IC score group", fontsize=10)
+            ax.set_ylabel("Age", fontsize=10)
+            ax.grid(axis="y", alpha=0.25)
+            fig.tight_layout()
+            plots["age_by_score_group"] = plot_to_base64(fig)
+
+    for outcome in ["OS", "PFS"]:
+        if outcome in grouped.columns:
+            outcome_df = grouped.copy()
+            outcome_df[outcome] = pd.to_numeric(outcome_df[outcome], errors="coerce")
+            outcome_df = outcome_df.dropna(subset=[outcome])
+            if outcome_df.empty:
+                continue
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+            outcome_groups = [
+                outcome_df.loc[outcome_df["IC score group"] == "Low 20%", outcome].values,
+                outcome_df.loc[outcome_df["IC score group"] == "High 20%", outcome].values,
+            ]
+            ax.boxplot(outcome_groups, labels=["Low 20%", "High 20%"], patch_artist=True)
+            ax.set_title(f"{ic_name}: {outcome} by IC Score Group", fontsize=12, fontweight="bold")
+            ax.set_xlabel("IC score group", fontsize=10)
+            ax.set_ylabel(outcome, fontsize=10)
+            ax.grid(axis="y", alpha=0.25)
+            fig.tight_layout()
+            plots[f"{outcome.lower()}_by_score_group"] = plot_to_base64(fig)
+
+    if "Type" in sample_meta.columns:
+        type_counts = sample_meta["Type"].fillna("Unknown").astype(str).value_counts()
         fig, ax = plt.subplots(figsize=(8, 5))
-        type_counts.plot(kind='bar', ax=ax, color='#1f77b4', alpha=0.7)
-        ax.set_title(f'{ic_name}: Sample Type Distribution', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Type', fontsize=10)
-        ax.set_ylabel('Count', fontsize=10)
-        ax.tick_params(axis='x', rotation=45)
+        type_counts.plot(kind="bar", ax=ax, color="#4c78a8", alpha=0.75)
+        ax.set_title(f"{ic_name}: All Sample Type Distribution", fontsize=12, fontweight="bold")
+        ax.set_xlabel("Type", fontsize=10)
+        ax.set_ylabel("Sample count", fontsize=10)
+        ax.tick_params(axis="x", rotation=35)
         fig.tight_layout()
-        plots['type_distribution'] = plot_to_base64(fig)
-    
-    # Plot 2: Grade distribution
-    if 'Grade' in sample_meta.columns:
-        grade_counts = sample_meta['Grade'].astype(str).value_counts().sort_index()
-        fig, ax = plt.subplots(figsize=(7, 5))
-        grade_counts.plot(kind='bar', ax=ax, color='#ff7f0e', alpha=0.7)
-        ax.set_title(f'{ic_name}: Sample Grade Distribution', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Grade', fontsize=10)
-        ax.set_ylabel('Count', fontsize=10)
-        fig.tight_layout()
-        plots['grade_distribution'] = plot_to_base64(fig)
-    
-    # Plot 3: Stage distribution
-    if 'Stage' in sample_meta.columns:
-        stage_counts = sample_meta['Stage'].astype(str).value_counts().sort_index()
-        fig, ax = plt.subplots(figsize=(7, 5))
-        stage_counts.plot(kind='bar', ax=ax, color='#2ca02c', alpha=0.7)
-        ax.set_title(f'{ic_name}: Sample Stage Distribution', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Stage', fontsize=10)
-        ax.set_ylabel('Count', fontsize=10)
-        fig.tight_layout()
-        plots['stage_distribution'] = plot_to_base64(fig)
-    
-    # Plot 4: Age histogram (if numeric)
-    if 'Age' in sample_meta.columns:
-        age_data = pd.to_numeric(sample_meta['Age'], errors='coerce').dropna()
+        plots["all_sample_type_distribution"] = plot_to_base64(fig)
+
+    if "Recurrence.status" in sample_meta.columns:
+        rec_counts = sample_meta["Recurrence.status"].fillna("Unknown").astype(str).value_counts()
+        if not rec_counts.empty:
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.pie(rec_counts.values, labels=rec_counts.index, autopct="%1.1f%%", startangle=90)
+            ax.set_title(f"{ic_name}: All Sample Recurrence Status", fontsize=12, fontweight="bold")
+            fig.tight_layout()
+            plots["all_sample_recurrence_status"] = plot_to_base64(fig)
+
+    if "Age" in sample_meta.columns:
+        age_data = pd.to_numeric(sample_meta["Age"], errors="coerce").dropna()
         if not age_data.empty:
             fig, ax = plt.subplots(figsize=(8, 5))
-            ax.hist(age_data, bins=15, color='#9467bd', alpha=0.7, edgecolor='white')
-            ax.set_title(f'{ic_name}: Age Distribution', fontsize=12, fontweight='bold')
-            ax.set_xlabel('Age', fontsize=10)
-            ax.set_ylabel('Count', fontsize=10)
-            ax.axvline(age_data.median(), color='red', linestyle='--', linewidth=2, label=f'Median: {age_data.median():.1f}')
+            ax.hist(age_data, bins=20, color="#9467bd", alpha=0.75, edgecolor="white")
+            ax.set_title(f"{ic_name}: All Sample Age Distribution", fontsize=12, fontweight="bold")
+            ax.set_xlabel("Age", fontsize=10)
+            ax.set_ylabel("Sample count", fontsize=10)
+            ax.axvline(age_data.median(), color="red", linestyle="--", linewidth=1.5, label=f"Median: {age_data.median():.1f}")
             ax.legend()
             fig.tight_layout()
-            plots['age_distribution'] = plot_to_base64(fig)
-    
-    # Plot 5: Recurrence status (if available)
-    if 'Recurrence.status' in sample_meta.columns:
-        rec_counts = sample_meta['Recurrence.status'].value_counts()
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.pie(rec_counts.values, labels=rec_counts.index, autopct='%1.1f%%', startangle=90, colors=['#8c564b', '#e377c2'])
-        ax.set_title(f'{ic_name}: Recurrence Status', fontsize=12, fontweight='bold')
-        fig.tight_layout()
-        plots['recurrence_status'] = plot_to_base64(fig)
-    
-    print(f"Generated {len(plots)} plots: {list(plots.keys())}")
-    print("=== END DEBUG ===\n")
+            plots["all_sample_age_distribution"] = plot_to_base64(fig)
+
     return plots
 
-
-gene_of_interest = "TP53"
-related_ics = find_ic(gene_of_interest)
-for ic_info in related_ics:
-    print(f"IC: {ic_info['IC']}, Loading: {ic_info['Loading']}")
-    print("Top Pathways:")
-    for pathway, score in ic_info["Top_Pathways"].items():
-        print(f"  {pathway}: {score}")
-    print("Top Samples:")
-    for sample in ic_info["Top_Samples"]:
-        print(f"  {sample}")
-    print("\n")
+if __name__ == "__main__":
+    gene_of_interest = "TP53"
+    related_ics = find_ic(gene_of_interest)
+    for ic_info in related_ics:
+        print(f"IC: {ic_info['IC']}, Loading: {ic_info['Loading']}")
+        print("Top Pathways:")
+        for pathway, score in ic_info["Top_Pathways"].items():
+            print(f"  {pathway}: {score}")
+        print("Top Samples:")
+        for sample in ic_info["Top_Samples"]:
+            print(f"  {sample}")
+        print("\n")
