@@ -12,7 +12,7 @@ import pandas as pd
 import requests
 from flask import Flask, jsonify, redirect, render_template, request, session
 
-LLM_URL = "http://localhost:8001/generate"
+LLM_URL = "http://localhost:8000/generate"
 
 THIS_DIR = Path(__file__).resolve().parent
 APP_DIR = THIS_DIR.parent
@@ -244,6 +244,27 @@ def summarize_publications(pub_list, max_papers_for_llm=5):
     return resp.json().get("output", "")
 
 
+def summarize_publication_hits(pub_list, max_papers=5):
+    """Create deterministic publication context when the LLM summary is empty."""
+    if not pub_list:
+        return ""
+
+    lines = [f"Publication search found {len(pub_list)} paper(s). Relevant examples:"]
+    for p in pub_list[:max_papers]:
+        title = (p.get("title") or "Untitled").strip()
+        year = (p.get("year") or "").strip()
+        source = (p.get("source") or "").strip()
+        abstract = " ".join((p.get("abstract") or "").split())
+        details = ", ".join(x for x in [year, source] if x)
+        prefix = f"{title} ({details})" if details else title
+        if abstract:
+            lines.append(f"- {prefix}: {abstract[:700]}")
+        else:
+            lines.append(f"- {prefix}")
+
+    return "\n".join(lines)
+
+
 def _load_ic_annotation_merged(ic_name: str):
     sample_path = ARCHIVE_DIR / "sample_annotations.txt"
     mixing_path = ARCHIVE_DIR / "mixing_matrix.txt"
@@ -281,23 +302,6 @@ def _load_ic_annotation_merged(ic_name: str):
         .str.strip()
         .str.replace(r"\.0$", "", regex=True)
     )
-
-    # Debug
-    sample_ids = set(sample_ann["sample_id"].dropna().tolist())
-    mixing_ids = set(ic_scores["sample_id"].dropna().tolist())
-    overlap = sample_ids & mixing_ids
-
-    print("\n=== MERGE DEBUG ===")
-    print("sample_annotations sample_id head:", sample_ann["sample_id"].head().tolist())
-    print("sample_annotations columns:", sample_ann.columns.tolist())
-    print("mixing sample_id head:", ic_scores["sample_id"].head().tolist())
-    print("sample_annotations count:", len(sample_ids))
-    print("mixing count:", len(mixing_ids))
-    print("overlap count:", len(overlap))
-    print("sample only example:", list(sorted(sample_ids - mixing_ids))[:5])
-    print("mixing only example:", list(sorted(mixing_ids - sample_ids))[:5])
-    print("overlap example:", list(sorted(overlap))[:5])
-    print("=== END MERGE DEBUG ===\n")
 
     merged = sample_ann.merge(ic_scores, on="sample_id", how="inner")
 
@@ -486,9 +490,278 @@ def get_plot_conclusions(ic_name, threshold):
     return conclusions
 
 
+def _as_float(value, default=0.0):
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _count_summary_items(text):
+    lines = [line.strip() for line in (text or "").splitlines() if line.strip()]
+    bullet_like = [
+        line for line in lines
+        if line.startswith("-") or re.match(r"^(bullet\s*)?\d+[\).:]\s+", line, flags=re.IGNORECASE)
+    ]
+    return len(bullet_like) if bullet_like else (1 if text and text.strip() else 0)
+
+
+def _build_structured_judgement(ic, gene, top_pathways, plot_conclusions, annotation_summary, publication_summary):
+    clean_gene = (gene or "").strip()
+    clean_pub = (publication_summary or "").strip()
+    top_pathways = top_pathways or []
+    plot_conclusions = plot_conclusions or []
+    annotation_summary = annotation_summary or []
+
+    if top_pathways:
+        pathway_name, pathway_score = top_pathways[0]
+        score = _as_float(pathway_score)
+        main_signal = f"{pathway_name} ({score:+.3f})"
+        main_direction = "positive" if score > 0 else "negative"
+        interpretation = (
+            f"The most supported interpretation for {ic} is that it captures biology related to "
+            f"{str(pathway_name).replace('HALLMARK_', '').replace('_', ' ').lower()}, because this is the strongest pathway signal."
+        )
+    else:
+        main_signal = "no pathway above the selected threshold"
+        main_direction = "not available"
+        interpretation = (
+            f"The biological interpretation for {ic} is weak because no pathway enrichment passed the selected threshold."
+        )
+
+    if top_pathways:
+        pathway_bits = []
+        for name, score in top_pathways[:3]:
+            score = _as_float(score)
+            direction = "positive" if score > 0 else "negative"
+            pathway_bits.append(f"{name} ({score:+.3f}, {direction})")
+        pathway_text = "The strongest pathway evidence is " + "; ".join(pathway_bits) + "."
+    else:
+        pathway_text = "There are no strong pathway signals available at this threshold."
+
+    sample_patterns = []
+    for line in plot_conclusions:
+        if not str(line).lower().startswith("top enriched pathway"):
+            sample_patterns.append(str(line))
+    if not sample_patterns:
+        sample_patterns = [str(x) for x in annotation_summary[:3]]
+    if sample_patterns:
+        sample_text = " ".join(sample_patterns[:4])
+    else:
+        sample_text = "No sample-level annotation pattern was available for this IC."
+
+    if clean_gene and clean_pub and clean_pub.lower() != "none":
+        pub_snippet = _shorten_text(clean_pub, 900)
+        gene_text = (
+            f"The related gene context is {clean_gene}; publication context was found: {pub_snippet}"
+        )
+    elif clean_gene:
+        gene_text = (
+            f"The related gene context is {clean_gene}, but publication-based literature support was not available in this run."
+        )
+    else:
+        gene_text = "No related gene was provided for this IC, and publication-based literature support was not available in this run."
+
+    evidence_level = "moderate" if top_pathways and (plot_conclusions or annotation_summary) else "weak"
+    caution_text = (
+        f"Overall evidence strength is {evidence_level}: the pathway signal is {main_signal} and its direction is {main_direction}, "
+        "while the clinical/sample associations are descriptive and should be treated as hypothesis-generating."
+    )
+
+    return "\n".join([
+        f"- {interpretation}",
+        f"- {pathway_text}",
+        f"- Sample-level evidence: {sample_text}",
+        f"- {gene_text}",
+        f"- {caution_text}",
+    ])
+
+
+def _is_greeting(message):
+    normalized = re.sub(r"[^a-z\s]", "", (message or "").lower()).strip()
+    return normalized in {
+        "hi",
+        "hello",
+        "hey",
+        "hey there",
+        "hi there",
+        "hello there",
+        "good morning",
+        "good afternoon",
+        "good evening",
+    }
+
+
+def _normalize_chat_text(text):
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", (text or "").lower())).strip()
+
+
+def _is_vague_followup(message):
+    normalized = _normalize_chat_text(message)
+    if not normalized:
+        return False
+    vague_phrases = {
+        "more",
+        "a bit more",
+        "tell me more",
+        "can you tell me more",
+        "something else",
+        "anything else",
+        "what else",
+        "go on",
+        "continue",
+        "expand",
+        "elaborate",
+    }
+    if normalized in vague_phrases:
+        return True
+    words = normalized.split()
+    return len(words) <= 5 and any(word in normalized for word in ("more", "else", "expand", "elaborate"))
+
+
+def _shorten_text(text, max_chars=360):
+    text = " ".join(str(text or "").split())
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rstrip() + "..."
+
+
+def _context_lines(items):
+    return [str(item).strip() for item in (items or []) if str(item).strip()]
+
+
+def _find_context_line(lines, *needles):
+    lowered_needles = [needle.lower() for needle in needles]
+    for line in lines:
+        lowered = line.lower()
+        if all(needle in lowered for needle in lowered_needles):
+            return line
+    return ""
+
+
+def _is_publication_question(question):
+    return any(
+        term in question
+        for term in (
+            "publication",
+            "publications",
+            "public",
+            "pubmed",
+            "literature",
+            "literatur",
+            "paper",
+            "papers",
+            "article",
+            "articles",
+            "study",
+            "studies",
+        )
+    )
+
+
+def _format_publication_context(publication_hits, max_papers=5):
+    lines = []
+    for idx, pub in enumerate((publication_hits or [])[:max_papers], start=1):
+        title = _shorten_text(pub.get("title") or "(no title)", 160)
+        year = str(pub.get("year") or "").strip()
+        authors = _shorten_text(pub.get("authors") or "", 120)
+        abstract = _shorten_text(pub.get("abstract") or "", 700)
+        pieces = [f"{idx}. {title}"]
+        if year:
+            pieces.append(f"({year})")
+        if authors:
+            pieces.append(f"Authors: {authors}.")
+        if abstract:
+            pieces.append(f"Abstract: {abstract}")
+        lines.append(" ".join(pieces))
+    return "\n".join(lines) if lines else "none"
+
+
+def _answer_direct_chat_question(message, top_pathways, plot_conclusions, annotation_summary, publication_summary, publication_hits):
+    question = _normalize_chat_text(message)
+    evidence_lines = _context_lines(plot_conclusions) + _context_lines(annotation_summary)
+
+    if "median age" in question or ("age" in question and "median" in question):
+        line = _find_context_line(evidence_lines, "median age")
+        if line:
+            return line if line.endswith(".") else f"{line}."
+        return "I do not see a median age value in the available sample annotation context."
+
+    if _is_publication_question(question):
+        if ("first" in question or "1st" in question) and publication_hits:
+            first = publication_hits[0]
+            title = first.get("title") or "(no title)"
+            year = first.get("year") or "no year listed"
+            source = first.get("source") or ""
+            abstract = _shorten_text(first.get("abstract") or "", 1000)
+            if abstract:
+                source_text = f" in {source}" if source else ""
+                return f'The first publication listed is "{title}" ({year}){source_text}. In short: {abstract}'
+            return f'The first publication listed is "{title}" ({year}), but I do not have an abstract for it.'
+        if "how many" in question or "count" in question:
+            count = len(publication_hits or [])
+            return f"There are {count} publication(s) currently loaded for this IC."
+        if publication_summary:
+            return _shorten_text(publication_summary, 1200)
+        if publication_hits:
+            return _format_publication_context(publication_hits, max_papers=5)
+        return "I do not see any loaded publication context for this IC yet."
+
+    if "strongest" in question and "pathway" in question and top_pathways:
+        name, score = top_pathways[0]
+        score = _as_float(score)
+        direction = "positive" if score > 0 else "negative"
+        return f"The strongest pathway evidence is {name} ({score:+.3f}, {direction})."
+
+    if any(word in question for word in ("sample", "samples", "annotation", "subtype", "grade", "stage", "recurrence", "survival")):
+        if evidence_lines:
+            return " ".join(line if line.endswith(".") else f"{line}." for line in evidence_lines[:3])
+        return "I do not see sample annotation evidence for this IC in the current page context."
+
+    return ""
+
+
+def _last_assistant_message(history):
+    for item in reversed(history or []):
+        if item.get("role") == "assistant":
+            return str(item.get("content") or "").strip()
+    return ""
+
+
+def _normalize_answer_text(text):
+    return re.sub(r"\s+", " ", (text or "").strip().lower())
+
+
+def _build_chat_continuation(ic, top_pathways, plot_conclusions, annotation_summary, publication_summary):
+    bits = []
+    if len(top_pathways or []) > 1:
+        pathway_bits = []
+        for name, score in top_pathways[1:3]:
+            score = _as_float(score)
+            direction = "positive" if score > 0 else "negative"
+            pathway_bits.append(f"{name} ({score:+.3f}, {direction})")
+        bits.append("Another angle is the secondary pathway signal: " + "; ".join(pathway_bits) + ".")
+
+    sample_lines = [
+        line for line in _context_lines(plot_conclusions)
+        if not line.lower().startswith("top enriched pathway")
+    ]
+    if not sample_lines:
+        sample_lines = _context_lines(annotation_summary)
+    if sample_lines:
+        bits.append("On the sample side, " + _shorten_text(sample_lines[0], 220))
+
+    if publication_summary:
+        bits.append("The loaded publication context adds: " + _shorten_text(publication_summary, 420))
+
+    if bits:
+        return " ".join(bits[:2])
+    return f"I do not have much more context for {ic} beyond the pathway list shown on this page."
+
+
 @app.route("/")
 def index():
-    return render_template("index.html", default_threshold=3, genesets=GENESET_DATABASES)
+    return render_template("index.html", default_threshold=1.5, genesets=GENESET_DATABASES)
 
 
 @app.route("/search", methods=["GET"])
@@ -498,7 +771,7 @@ def search():
     entrez = request.args.get("entrez", type=str)
     symbol = request.args.get("symbol", type=str)
     genetitle = request.args.get("genetitle", type=str)
-    threshold = request.args.get("threshold", default=3)
+    threshold = request.args.get("threshold", default=1.5)
     try:
         threshold = float(threshold)
     except Exception:
@@ -619,15 +892,6 @@ def ic_detail(ic_name):
     annotation_summary = summarize_annotation_patterns(ic_name, threshold)
     plot_conclusions = get_plot_conclusions(ic_name, threshold)
 
-    print(f"\n=== FLASK DEBUG ===")
-    print(f"IC: {ic_name}, Threshold: {threshold}")
-    print(f"Enrichment plot exists: {enrichment_plot is not None}")
-    print(f"Annotation plots type: {type(annotation_plots)}")
-    print(f"Annotation plots: {annotation_plots.keys() if annotation_plots else 'empty/None'}")
-    print(f"Annotation summary: {annotation_summary}")
-    print(f"Plot conclusions: {plot_conclusions}")
-    print(f"=== END FLASK DEBUG ===\n")
-
     return render_template(
         "ic_detail.html",
         ic_name=ic_name,
@@ -678,22 +942,38 @@ def api_ic_publications():
         return jsonify({"error": "No usable IC context for literature search"}), 400
 
     query = " AND ".join(query_parts) + " AND hasabstract[text]"
+    attempted_queries = [query]
 
     try:
         pubs = fetch_publications(query, max_results=max_results)
+        if not pubs and gene and pathway_terms:
+            query = "(" + " OR ".join(pathway_terms) + ") AND hasabstract[text]"
+            attempted_queries.append(query)
+            pubs = fetch_publications(query, max_results=max_results)
+        if not pubs and gene:
+            query = f'"{gene}"[Title/Abstract] AND hasabstract[text]'
+            attempted_queries.append(query)
+            pubs = fetch_publications(query, max_results=max_results)
     except Exception as e:
         return jsonify({"error": "Failed to fetch publications", "detail": str(e)}), 500
 
     try:
-        llm_summary = summarize_publications(pubs, max_papers_for_llm=5)
-    except Exception as e:
-        llm_summary = f"LLM summary failed: {e}"
+        llm_summary = summarize_publications(pubs, max_papers_for_llm=5).strip()
+    except Exception:
+        llm_summary = ""
+
+    if pubs and (
+        not llm_summary
+        or llm_summary.lower() == "no abstracts available to summarize."
+    ):
+        llm_summary = summarize_publication_hits(pubs, max_papers=5)
 
     return jsonify(
         {
             "ic": ic_name,
             "gene": gene,
             "query": query,
+            "attempted_queries": attempted_queries,
             "top_pathways": top_pathways,
             "publications": pubs,
             "llm_summary": llm_summary,
@@ -721,7 +1001,7 @@ def summary():
     publication_summary_text = publication_summary if publication_summary else "none"
 
     prompt = f"""
-You are a biomedical research assistant interpreting Independent Component Analysis (ICA) results.
+You are a biomedical research assistant interpreting Independent Component Analysis (ICA) results from gene expression data.
 
 Component: {ic}
 Threshold: {threshold}
@@ -742,20 +1022,27 @@ Sample annotation evidence:
 Publication-based literature summary:
 {publication_summary_text}
 
-Write 4-6 bullet points that:
-- state the most likely biological interpretation of this IC
-- mention the strongest pathway signals
-- describe concrete sample-level patterns when supported by the structured plot conclusions or annotation evidence
-- incorporate the publication-based summary when available
-- explicitly mention subgroup trends such as age, stage, grade, subtype, tumor type, recurrence, or survival if present
-- only make claims that are supported by the provided evidence
-- if evidence is weak or unavailable, say that clearly
-- prioritize structured plot conclusions and annotation evidence over generic speculation
+Write a detailed but careful overall judgement for this IC.
 
-Use '-' bullets only.
-Do not number bullets.
-Be concrete and specific.
-Do not invent unsupported clinical associations.
+Required format:
+- Write exactly 5 bullet points.
+- Each bullet must be 1-2 complete sentences.
+- Do not write a single short paragraph.
+- Do not stop after only describing the top pathway.
+
+Cover these five ideas, one per bullet:
+- Most likely biological interpretation of this IC.
+- Strongest pathway signals and their direction.
+- Sample-level annotation patterns, including subtype, grade, stage, tumor type, age, recurrence, or survival when available.
+- Related gene and publication summary when evidence is available.
+- Cautious conclusion, including whether the evidence is strong, moderate, weak, or mostly descriptive.
+
+Rules:
+- Only make claims supported by the provided pathway, annotation, plot, or publication evidence.
+- If publication evidence is unavailable, say that literature support was not available in this run.
+- If clinical subgroup evidence is descriptive rather than causal, say so clearly.
+- Be specific and avoid generic filler.
+- Use '-' bullets only.
 
 ASSISTANT ANSWER:
 -
@@ -765,19 +1052,35 @@ ASSISTANT ANSWER:
         payload = {
             "prompt": prompt,
             "raw_prompt": True,
-            "max_new_tokens": 300,
+            "max_new_tokens": 600,
             "temperature": 0.3,
             "top_p": 0.9,
         }
         resp = requests.post(LLM_URL, json=payload, timeout=120)
         resp.raise_for_status()
-        reply = resp.json().get("output", "").strip()
+        response_data = resp.json()
+        reply = (
+            response_data.get("output")
+            or response_data.get("reply")
+            or response_data.get("text")
+            or response_data.get("generated_text")
+            or ""
+        ).strip()
 
         marker = "ASSISTANT ANSWER:"
         if marker in reply:
-            reply = reply.split(marker, 1)[-1].strip()
-        if not reply:
-            reply = "Sorry — I didn't generate a valid answer. Please re-ask your question."
+            after_marker = reply.rsplit(marker, 1)[-1].strip()
+            if after_marker:
+                reply = after_marker
+        if _count_summary_items(reply) < 3:
+            reply = _build_structured_judgement(
+                ic,
+                gene,
+                top_pathways,
+                plot_conclusions,
+                annotation_summary,
+                publication_summary,
+            )
 
         return jsonify({"reply": reply})
     except Exception as e:
@@ -793,6 +1096,11 @@ def chat():
     if not user_msg:
         return jsonify({"reply": "Please ask something."}), 400
 
+    if _is_greeting(user_msg):
+        return jsonify({
+            "reply": "Hi! Ask me anything about this IC, its pathways, sample annotations, or publications."
+        })
+
     if "sid" not in session:
         session["sid"] = uuid.uuid4().hex
 
@@ -801,13 +1109,37 @@ def chat():
     gene = (ctx.get("gene") or "").strip()
     threshold = ctx.get("threshold")
     judgement = (ctx.get("judgement") or "").strip()
+    top_pathways = ctx.get("topPathways") or []
+    annotation_summary = ctx.get("annotationSummary") or []
+    plot_conclusions = ctx.get("plotConclusions") or []
+    publication_summary = (ctx.get("publicationSummary") or "").strip()
+    publication_hits = ctx.get("publicationHits") or []
 
     histories = session.get("chat_histories", {})
     key = f"{sid}::{ic}::{gene}::{threshold}"
     history = histories.get(key, [])
-
-    top_pathways = ctx.get("topPathways") or []
     pathway_lines = "\n".join([f"- {name}: {score:+.3f}" for name, score in top_pathways]) or "none"
+    annotation_summary_text = "\n".join(f"- {x}" for x in annotation_summary) if annotation_summary else "none"
+    plot_conclusions_text = "\n".join(f"- {x}" for x in plot_conclusions) if plot_conclusions else "none"
+    publication_summary_text = publication_summary if publication_summary else "none"
+    publication_lines = _format_publication_context(publication_hits)
+    previous_assistant = _last_assistant_message(history)
+    is_vague_followup = _is_vague_followup(user_msg)
+
+    direct_reply = _answer_direct_chat_question(
+        user_msg,
+        top_pathways,
+        plot_conclusions,
+        annotation_summary,
+        publication_summary,
+        publication_hits,
+    )
+    if direct_reply:
+        history.append({"role": "user", "content": user_msg})
+        history.append({"role": "assistant", "content": direct_reply})
+        histories[key] = history[-CHAT_HISTORY_MAX_TURNS:]
+        session["chat_histories"] = histories
+        return jsonify({"reply": direct_reply})
 
     history.append({"role": "user", "content": user_msg})
 
@@ -828,16 +1160,41 @@ Related gene: {gene}
 Top pathway enrichments (score shown; positive/negative indicate direction):
 {pathway_lines}
 
+Structured plot conclusions:
+{plot_conclusions_text}
+
+Sample annotation evidence:
+{annotation_summary_text}
+
+Publication summary:
+{publication_summary_text}
+
+Loaded publications:
+{publication_lines}
+
 Background (do NOT quote or repeat this text; use only as context):
 \"\"\"
 {judgement}
 \"\"\"
 
+Previous assistant answer:
+\"\"\"
+{previous_assistant or "none"}
+\"\"\"
+
+Latest user message is a vague follow-up: {"yes" if is_vague_followup else "no"}
+
 CHAT HISTORY:
 {history_text}
 
 RULES:
+- Keep the answer concise and natural: usually 2-5 sentences, or 2-4 short bullets only when bullets help.
+- Answer the user's exact question first.
+- For publication questions, use the loaded publications or publication summary.
+- For age, subtype, grade, stage, recurrence, survival, or sample questions, use the sample annotation evidence and plot conclusions.
 - Do NOT copy the background judgement text verbatim. Summarize it only if relevant.
+- Do NOT repeat a previous assistant answer or sentence.
+- If the latest user message is a vague follow-up, add a new detail from pathways, sample annotations, or publications instead of restating the strongest pathway.
 - Write ONLY the assistant answer. Do NOT repeat the system prompt.
 - Answer the LAST USER message.
 - If the user asks to name pathways, ONLY use the pathway list shown above.
@@ -846,7 +1203,6 @@ RULES:
 - If you can't copy at least one exact label, answer: I can't list pathways because none were provided.
 
 ASSISTANT ANSWER:
--
 """.strip()
 
     def _call_llm(prompt_text: str) -> str:
@@ -863,7 +1219,13 @@ ASSISTANT ANSWER:
             data = resp.json()
         except ValueError:
             return ""
-        return (data.get("output") or "").strip()
+        return (
+            data.get("output")
+            or data.get("reply")
+            or data.get("text")
+            or data.get("generated_text")
+            or ""
+        ).strip()
 
     try:
         reply = _call_llm(prompt)
@@ -878,6 +1240,15 @@ ASSISTANT ANSWER:
             flags=re.MULTILINE,
         ).strip()
 
+        if previous_assistant and _normalize_answer_text(reply) == _normalize_answer_text(previous_assistant):
+            reply = _build_chat_continuation(
+                ic,
+                top_pathways,
+                plot_conclusions,
+                annotation_summary,
+                publication_summary,
+            )
+
         if not reply:
             retry_prompt = f"""SYSTEM: You are a biomedical research assistant.
 
@@ -887,6 +1258,14 @@ Threshold: {threshold}
 Related gene: {gene}
 Top pathway enrichments:
 {pathway_lines}
+Structured plot conclusions:
+{plot_conclusions_text}
+Sample annotation evidence:
+{annotation_summary_text}
+Publication summary:
+{publication_summary_text}
+Loaded publications:
+{publication_lines}
 
 USER: {user_msg}
 ASSISTANT ANSWER:""".strip()
@@ -895,7 +1274,13 @@ ASSISTANT ANSWER:""".strip()
             if marker in reply:
                 reply = reply.split(marker, 1)[-1].strip()
             if not reply:
-                reply = "Sorry — I didn't generate a valid answer. Please re-ask your question."
+                reply = _build_chat_continuation(
+                    ic,
+                    top_pathways,
+                    plot_conclusions,
+                    annotation_summary,
+                    publication_summary,
+                )
 
         history.append({"role": "assistant", "content": reply})
         history = history[-CHAT_HISTORY_MAX_TURNS:]
@@ -904,8 +1289,15 @@ ASSISTANT ANSWER:""".strip()
         session["chat_histories"] = histories
 
         return jsonify({"reply": reply})
-    except Exception as e:
-        return jsonify({"reply": f"Error: {str(e)}"}), 500
+    except Exception:
+        fallback = _build_chat_continuation(
+            ic,
+            top_pathways,
+            plot_conclusions,
+            annotation_summary,
+            publication_summary,
+        )
+        return jsonify({"reply": fallback})
 
 
 @app.route("/chat/reset", methods=["POST"])

@@ -15,10 +15,12 @@
   </div>
 
   <div id="chat-context"
-       data-ic="{{ ic_name }}"
+       data-ic="{{ ic_name|e }}"
        data-threshold="{{ '%.2f'|format(threshold) }}"
-       data-gene="{{ gene or '' }}"
-       data-top-pathways='{{ top_pathways|tojson }}'>
+       data-gene="{{ (gene or '')|e }}"
+       data-top-pathways="{{ top_pathways|tojson|forceescape }}"
+       data-annotation-summary="{{ (annotation_summary or [])|tojson|forceescape }}"
+       data-plot-conclusions="{{ (plot_conclusions or [])|tojson|forceescape }}">
   </div>
 
   <div id="llm-judgement-text" style="display:none;"></div>
@@ -38,7 +40,13 @@
           <div id="pub_status" class="muted small"></div>
         </div>
 
-        <div id="publications_container" style="margin-top:0.75rem;"></div>
+        <details id="publications_details" style="margin-top:0.75rem;">
+          <summary style="cursor:pointer; font-weight:650;">
+            <span id="publications_summary_label">Publications (0)</span>
+            <span class="muted small" style="font-weight:400;"> - click to expand</span>
+          </summary>
+          <div id="publications_container" style="margin-top:0.75rem;"></div>
+        </details>
       </div>
 
       <div class="card">
@@ -85,14 +93,20 @@
           <h3 class="section-title">Plot Conclusions</h3>
           <span class="muted small">Auto-generated from IC and sample data</span>
         </div>
-        <div id="plot-conclusions-text" class="muted" style="white-space: pre-wrap;">
-{% if plot_conclusions %}
-{% for line in plot_conclusions %}
-- {{ line }}
-{% endfor %}
-{% else %}
-- No plot conclusions available.
-{% endif %}
+        <div id="plot-conclusions-text" class="muted" style="display:grid; gap:0.35rem;">
+          {% if plot_conclusions %}
+            {% for line in plot_conclusions %}
+              <div style="display:grid; grid-template-columns:0.8rem 1fr; gap:0.25rem; align-items:start;">
+                <span aria-hidden="true">-</span>
+                <span>{{ line }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div style="display:grid; grid-template-columns:0.8rem 1fr; gap:0.25rem; align-items:start;">
+              <span aria-hidden="true">-</span>
+              <span>No plot conclusions available.</span>
+            </div>
+          {% endif %}
         </div>
       </div>
 
@@ -135,18 +149,24 @@
 
 <script src="{{ url_for('static', filename='chat.js') }}"></script>
 <script>
-let publicationSummaryText = "";
+window.publicationSummaryText = "";
+window.publicationHits = [];
+window.publicationsReadyPromise = Promise.resolve(false);
 
 (function(){
   const fetchBtn = document.getElementById('fetch_pubs_btn');
   const status = document.getElementById('pub_status');
   const container = document.getElementById('publications_container');
+  const details = document.getElementById('publications_details');
+  const summaryLabel = document.getElementById('publications_summary_label');
 
   if (!fetchBtn) return;
 
-  fetchBtn.addEventListener('click', async function(){
+  async function fetchPublications(refreshJudgement = true){
     container.innerHTML = '';
     status.textContent = 'Fetching...';
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = 'Fetching...';
 
     const icName = "{{ ic_name }}";
     const geneVal = "{{ gene or '' }}".trim();
@@ -161,18 +181,27 @@ let publicationSummaryText = "";
       if (!res.ok) {
         const err = await res.json().catch(()=>({}));
         status.textContent = err.error || 'Failed to fetch publications';
-        return;
+        return false;
       }
 
       const data = await res.json();
       const pubs = data.publications || [];
-      publicationSummaryText = data.llm_summary || '';
+      window.publicationSummaryText = data.llm_summary || '';
+      window.publicationHits = pubs;
 
       status.textContent = `${pubs.length} publication(s) found`;
+      fetchBtn.textContent = 'Refresh publications';
+      if (summaryLabel) {
+        summaryLabel.textContent = `Publications (${pubs.length})`;
+      }
+      if (details) {
+        details.open = false;
+      }
 
       const listWrap = document.createElement('div');
-      listWrap.style.marginTop = '0.75rem';
-      listWrap.innerHTML = `<h4 style="margin:0 0 0.5rem;">Publications (${pubs.length})</h4>`;
+      listWrap.innerHTML = pubs.length
+        ? `<div class="muted small" style="margin-bottom:0.5rem;">Showing ${pubs.length} publication(s).</div>`
+        : `<div class="muted small">No publications found for the current query.</div>`;
 
       const grid = document.createElement('div');
       grid.style.display = 'grid';
@@ -201,15 +230,28 @@ let publicationSummaryText = "";
       listWrap.appendChild(grid);
       container.appendChild(listWrap);
 
-      if (window.refreshOverallJudgement) {
+      if (refreshJudgement && window.refreshOverallJudgement) {
         window.refreshOverallJudgement();
       }
+      return true;
 
     } catch (err) {
       status.textContent = 'Error fetching publications';
       console.error(err);
+      return false;
+    } finally {
+      fetchBtn.disabled = false;
+      if (fetchBtn.textContent === 'Fetching...') {
+        fetchBtn.textContent = 'Retry publications';
+      }
     }
+  }
+
+  fetchBtn.addEventListener('click', function(){
+    window.publicationsReadyPromise = fetchPublications(true);
   });
+
+  window.publicationsReadyPromise = fetchPublications(false);
 
   function escapeHtml(s) {
     if (!s) return '';
@@ -259,7 +301,7 @@ let publicationSummaryText = "";
           topPathways: ctx.topPathways,
           annotationSummary: ctx.annotationSummary,
           plotConclusions: ctx.plotConclusions,
-          publicationSummary: publicationSummaryText
+          publicationSummary: window.publicationSummaryText || ''
         })
       });
 
@@ -294,8 +336,21 @@ let publicationSummaryText = "";
     });
   }
 
-  fetchSummary();
-  retryBtn.addEventListener('click', fetchSummary);
+  async function fetchInitialSummary() {
+    summaryEl.textContent = 'Fetching publications...';
+    if (window.publicationsReadyPromise) {
+      await window.publicationsReadyPromise;
+    }
+    fetchSummary();
+  }
+
+  fetchInitialSummary();
+  retryBtn.addEventListener('click', async () => {
+    if (window.publicationsReadyPromise) {
+      await window.publicationsReadyPromise;
+    }
+    fetchSummary();
+  });
 })();
 </script>
 {% endblock %}

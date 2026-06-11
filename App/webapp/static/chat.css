@@ -34,7 +34,7 @@
 
 /* KEY: keep the entire chat panel to a reasonable size */
 #chat-panel {
-  max-height: 520px;           /* adjust if you want */
+  max-height: 680px;
 }
 
 /* KEY: the message area scrolls */
@@ -43,7 +43,7 @@
   padding: 10px;
   overflow-y: auto;
   background: #f3f4f6;
-  min-height: 220px;
+  min-height: 300px;
 }
 
 /* nicer long-wrap behavior */
@@ -51,7 +51,7 @@
   margin: 8px 0;
   padding: 8px 10px;
   border-radius: 12px;
-  max-width: 92%;
+  max-width: 96%;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;

@@ -12,6 +12,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const threshold = ctxEl?.dataset?.threshold || "";
   const gene = ctxEl?.dataset?.gene || "";
 
+  function readContextJson(name, fallback = []) {
+    try {
+      const raw = ctxEl?.dataset?.[name] || "[]";
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  }
+
   function scrollToBottom() {
     requestAnimationFrame(() => {
       if (messages) {
@@ -56,13 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const text = input.value.trim();
       if (!text) return;
 
-      let topPathways = [];
-      try {
-        const raw = ctxEl?.dataset?.topPathways || "[]";
-        topPathways = JSON.parse(raw);
-      } catch {
-        topPathways = [];
-      }
+      const topPathways = readContextJson("topPathways");
+      const annotationSummary = readContextJson("annotationSummary");
+      const plotConclusions = readContextJson("plotConclusions");
 
       const judgementNow =
         document.getElementById("llm-judgement-text")?.textContent?.trim() || "";
@@ -78,12 +83,38 @@ document.addEventListener("DOMContentLoaded", () => {
       scrollToBottom();
 
       try {
+        if (window.publicationsReadyPromise) {
+          await window.publicationsReadyPromise;
+        }
+
+        const publicationHits = Array.isArray(window.publicationHits)
+          ? window.publicationHits.slice(0, 5).map((p) => ({
+              title: p.title || "",
+              year: p.year || "",
+              authors: p.authors || "",
+              source: p.source || "",
+              abstract: p.abstract || "",
+              url: p.url || "",
+              doi: p.doi || ""
+            }))
+          : [];
+
         const resp = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: text,
-            context: { ic, threshold, gene, judgement: judgementNow, topPathways }
+            context: {
+              ic,
+              threshold,
+              gene,
+              judgement: judgementNow,
+              topPathways,
+              annotationSummary,
+              plotConclusions,
+              publicationSummary: window.publicationSummaryText || "",
+              publicationHits
+            }
           })
         });
 

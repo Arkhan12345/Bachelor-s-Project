@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}Test1{% endblock %}</title>
+  <title>{% block title %}Home{% endblock %}</title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   {% block head %}{% endblock %}
@@ -11,7 +11,7 @@
 <body>
 <header>
   <div class="brand">
-    <h1><a href="{{ url_for('index') }}">Test</a></h1>
+    <h1><a href="{{ url_for('index') }}">Home</a></h1>
   </div>
 </header>
 

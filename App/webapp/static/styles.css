@@ -27,7 +27,7 @@ header{
   padding: 0.9rem 1.25rem;
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 10000;
   box-shadow: 0 1px 0 rgba(255,255,255,0.10);
 }
 header .brand{
@@ -86,6 +86,12 @@ a:hover{
   border-radius: var(--radius);
   padding: 1rem;
   box-shadow: var(--shadow);
+  position: relative;
+  z-index: 0;
+}
+
+.card:focus-within{
+  z-index: 50;
 }
 
 /* default: cards don’t change background (only subtle shadow + tiny lift) */
@@ -289,7 +295,7 @@ details.ic-item .ic-body{
   gap: 1rem;
 }
 @media (min-width: 980px){
-  .detail-grid{ grid-template-columns: 420px 1fr; align-items: start; }
+  .detail-grid{ grid-template-columns: minmax(520px, 560px) minmax(0, 1fr); align-items: start; }
 }
 
 footer{
@@ -461,7 +467,7 @@ header{
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
   overflow: hidden;
-  z-index: 1000;
+  z-index: 5000;
 }
 
 .suggestions.hidden{ display:none; }
@@ -493,6 +499,7 @@ header{
 
 .gene-field{
   position: relative;
+  z-index: 5000;
 }
 
 .toolbar, .card, .grow { overflow: visible !important; }
