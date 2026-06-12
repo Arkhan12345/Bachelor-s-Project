@@ -1,1 +1,21 @@
-App/_pychache_
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Tool caches and test output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local config and OS files
+.env
+.DS_Store
+
+# Generated logs
+*.log

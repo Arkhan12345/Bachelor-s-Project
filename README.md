@@ -23,41 +23,27 @@ Archive/                # Reference data files
 
 ---
 
-## Restart from zero (stop everything cleanly)
+## Correct run instructions
 
-### A) On the GPU node (inside your `srun` shell)
-If you used **tmux**:
-- In tmux: stop servers with `Ctrl+C` in each pane/window
-- Then exit tmux: `exit` (or `Ctrl+b` then `:kill-session`)
+### How to connect to a SSH host
 
-If you started servers in the background:
-```bash
-pkill -f "python .*App/webapp/app.py" || true
-pkill -f "python .*LLM/llm_server.py" || true
-```
+On VSCode, install the Remote SSH Extension.
+To connect to the cluster press Ctrl + Shift + P and type "Remote-SSH: Connect to Host".
+Select "Add New SSH Host" and enter "ssh <USERNAME>@interactive1.hb.hpc.rug.nl".
+VS Code will ask where to save the SSH configuration.
+Choose the default file.
 
-Then leave the compute node shell:
-```bash
-exit
-```
+Now connect to the cluster:
 
-### B) Cancel the Slurm job (from interactive1 / login shell)
-Find your job id and cancel it:
-```bash
-squeue -u $USER
-scancel <JOBID>
-```
+"Remote-SSH: Connect to Host"
 
-### C) Close your laptop tunnel
-On **your laptop** terminal where you ran SSH port-forwarding:
-- press `Ctrl+C` (if you used `ssh -N ...`) or type `exit`
+Select your required host and enter your password.
+After connecting, VS Code will open a new window connected to the cluster.
 
----
+In the remote VS Code window clone the github repository.
 
-## Correct run instructions (with tmux)
-
-> **Important idea:** run BOTH servers (LLM on 8000 and Webapp on 5000) on the **same GPU compute node** (the one you get from `srun`).  
-> Only do SSH port-forwarding from your **laptop → cluster**.
+**Important idea:** run BOTH servers (LLM on 8000 and Webapp on 5000) on the **same GPU compute node** (the one you get from `srun`).  
+Only do SSH port-forwarding from your **laptop → cluster**.
 
 ### Step 0 — (One-time) create conda env
 Run this once (on any node where you have conda available; typically `interactive1` is easiest):
@@ -72,11 +58,12 @@ After this, you will normally only need `module load` + `conda activate`.
 
 ---
 
-### Step 1 — Request GPU resources (on interactive1)
+### Step 1 — Request GPU resources
 ```bash
 srun --gres=gpu:1 --mem=32G --cpus-per-task=4 --time=01:00:00 --pty bash
 ```
 
+Change values accordingly.
 You should now be on a compute node (example):
 ```
 [s5068290@a100gpu6 ...]$
@@ -141,8 +128,8 @@ ss -tulpn | grep ':5000'
 
 ---
 
-### Step 6 — Local laptop port-forward (run ONLY on your laptop)
-Open a new terminal on your **laptop** and run:
+### Step 6 — Local computer port-forward (run ONLY on your local computer)
+Open a new terminal on your **computer** and run:
 
 ```bash
 ssh -N -L 5000:<COMPUTE_NODE>:5000 -L 8000:<COMPUTE_NODE>:8000 s5068290@interactive1.hb.hpc.rug.nl
@@ -160,20 +147,3 @@ Visit:
 (or `http://localhost:5000`)
 
 ---
-
-## Quick troubleshooting
-
-### “Connection refused” to localhost:8000
-- On the compute node, verify:
-  ```bash
-  ss -tulpn | egrep ':5000|:8000'
-  ```
-  You should see `python` listening on both ports.
-
-### LLM box says “No reply” / errors
-- Check LLM logs in the tmux pane running `llm_server.py`
-- Verify the endpoint responds on the compute node:
-  ```bash
-  curl -s -X POST http://127.0.0.1:8000/generate -H 'Content-Type: application/json' -d '{"prompt":"test","max_new_tokens":50}'
-  ```
-
