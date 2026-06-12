@@ -12,7 +12,7 @@ import pandas as pd
 import requests
 from flask import Flask, jsonify, redirect, render_template, request, session
 
-LLM_URL = "http://localhost:8000/generate"
+LLM_URL = os.environ.get("LLM_URL", "http://127.0.0.1:8000/generate")
 
 THIS_DIR = Path(__file__).resolve().parent
 APP_DIR = THIS_DIR.parent
@@ -497,84 +497,113 @@ def _as_float(value, default=0.0):
         return default
 
 
-def _count_summary_items(text):
-    lines = [line.strip() for line in (text or "").splitlines() if line.strip()]
-    bullet_like = [
-        line for line in lines
-        if line.startswith("-") or re.match(r"^(bullet\s*)?\d+[\).:]\s+", line, flags=re.IGNORECASE)
-    ]
-    return len(bullet_like) if bullet_like else (1 if text and text.strip() else 0)
+def _is_valid_overall_judgement(text):
+    clean = " ".join((text or "").split())
+    if len(clean.split()) < 25:
+        return False
+    blocked_markers = ("SYSTEM:", "CONTEXT:", "ASSISTANT ANSWER:", "Required format:")
+    return not any(marker.lower() in clean.lower() for marker in blocked_markers)
 
 
 def _build_structured_judgement(ic, gene, top_pathways, plot_conclusions, annotation_summary, publication_summary):
     clean_gene = (gene or "").strip()
     clean_pub = (publication_summary or "").strip()
     top_pathways = top_pathways or []
-    plot_conclusions = plot_conclusions or []
-    annotation_summary = annotation_summary or []
+    positive = {
+        str(name).upper(): _as_float(score)
+        for name, score in top_pathways
+        if _as_float(score) > 0
+    }
+    negative = {
+        str(name).upper(): _as_float(score)
+        for name, score in top_pathways
+        if _as_float(score) < 0
+    }
 
-    if top_pathways:
-        pathway_name, pathway_score = top_pathways[0]
-        score = _as_float(pathway_score)
-        main_signal = f"{pathway_name} ({score:+.3f})"
-        main_direction = "positive" if score > 0 else "negative"
-        interpretation = (
-            f"The most supported interpretation for {ic} is that it captures biology related to "
-            f"{str(pathway_name).replace('HALLMARK_', '').replace('_', ' ').lower()}, because this is the strongest pathway signal."
+    has_myc = any("MYC_TARGETS" in name for name in positive)
+    has_e2f = any("E2F_TARGETS" in name for name in positive)
+    has_mtorc1 = any("MTORC1_SIGNALING" in name for name in positive)
+    has_hypoxia = any("HYPOXIA" in name for name in positive)
+
+    interpretations = []
+    if has_myc and has_e2f:
+        interpretations.append(
+            "coordinated MYC- and E2F-regulated transcription, consistent with increased cell-cycle progression and proliferation"
         )
-    else:
-        main_signal = "no pathway above the selected threshold"
-        main_direction = "not available"
-        interpretation = (
-            f"The biological interpretation for {ic} is weak because no pathway enrichment passed the selected threshold."
+    elif has_myc:
+        interpretations.append(
+            "MYC-driven transcription associated with cellular growth, biosynthesis, and proliferation"
+        )
+    elif has_e2f:
+        interpretations.append(
+            "E2F-regulated cell-cycle activity consistent with increased proliferative capacity"
         )
 
-    if top_pathways:
-        pathway_bits = []
+    if has_mtorc1:
+        interpretations.append(
+            "mTORC1-linked anabolic growth and protein-synthesis signaling"
+        )
+    if has_hypoxia:
+        interpretations.append(
+            "a hypoxia-response program that may reflect adaptation to tumor stress"
+        )
+
+    if interpretations:
+        biological_program = "; ".join(interpretations)
+    elif top_pathways:
+        strongest = []
         for name, score in top_pathways[:3]:
-            score = _as_float(score)
-            direction = "positive" if score > 0 else "negative"
-            pathway_bits.append(f"{name} ({score:+.3f}, {direction})")
-        pathway_text = "The strongest pathway evidence is " + "; ".join(pathway_bits) + "."
+            label = str(name).replace("HALLMARK_", "").replace("_", " ").lower()
+            direction = "activation" if _as_float(score) > 0 else "suppression"
+            strongest.append(f"{label} {direction}")
+        biological_program = ", ".join(strongest)
     else:
-        pathway_text = "There are no strong pathway signals available at this threshold."
-
-    sample_patterns = []
-    for line in plot_conclusions:
-        if not str(line).lower().startswith("top enriched pathway"):
-            sample_patterns.append(str(line))
-    if not sample_patterns:
-        sample_patterns = [str(x) for x in annotation_summary[:3]]
-    if sample_patterns:
-        sample_text = " ".join(sample_patterns[:4])
-    else:
-        sample_text = "No sample-level annotation pattern was available for this IC."
-
-    if clean_gene and clean_pub and clean_pub.lower() != "none":
-        pub_snippet = _shorten_text(clean_pub, 900)
-        gene_text = (
-            f"The related gene context is {clean_gene}; publication context was found: {pub_snippet}"
+        return (
+            f"{ic} does not have enough pathway enrichment evidence at the selected threshold "
+            "for a confident biological interpretation."
         )
-    elif clean_gene:
-        gene_text = (
-            f"The related gene context is {clean_gene}, but publication-based literature support was not available in this run."
+
+    coordinated_growth = has_myc and has_e2f and has_mtorc1
+    if coordinated_growth:
+        consequence = (
+            "Together, these signals define a coherent growth-promoting program compatible with "
+            "tumor expansion and more aggressive cancer behavior."
+        )
+    elif has_myc and has_e2f:
+        consequence = (
+            "Together, these signals support a proliferative tumor program rather than an isolated pathway effect."
         )
     else:
-        gene_text = "No related gene was provided for this IC, and publication-based literature support was not available in this run."
+        consequence = (
+            "This interpretation is driven primarily by the pathway pattern and should not be treated as proof of causation."
+        )
 
-    evidence_level = "moderate" if top_pathways and (plot_conclusions or annotation_summary) else "weak"
-    caution_text = (
-        f"Overall evidence strength is {evidence_level}: the pathway signal is {main_signal} and its direction is {main_direction}, "
-        "while the clinical/sample associations are descriptive and should be treated as hypothesis-generating."
+    if clean_pub and clean_pub.lower() != "none":
+        literature = (
+            "The retrieved literature provides supporting biological context for this pathway-level interpretation, "
+            "although individual papers may not be specific to this IC or cohort."
+        )
+        evidence_level = "moderate-to-strong" if coordinated_growth else "moderate"
+    else:
+        literature = (
+            "No directly usable publication summary was available, so the interpretation rests mainly on pathway coherence."
+        )
+        evidence_level = "moderate" if has_myc and has_e2f else "limited"
+
+    gene_context = f" The component was identified in the context of {clean_gene}." if clean_gene else ""
+    suppressed_context = ""
+    if negative:
+        strongest_negative = min(negative.items(), key=lambda item: item[1])[0]
+        if "ESTROGEN_RESPONSE" in strongest_negative:
+            suppressed_context = (
+                " Reduced estrogen-response signaling may represent a secondary opposing feature of the component."
+            )
+
+    return (
+        f"{ic} is most consistent with {biological_program}. {consequence} "
+        f"{literature} Overall evidence is {evidence_level} and remains hypothesis-generating."
+        f"{gene_context}{suppressed_context}"
     )
-
-    return "\n".join([
-        f"- {interpretation}",
-        f"- {pathway_text}",
-        f"- Sample-level evidence: {sample_text}",
-        f"- {gene_text}",
-        f"- {caution_text}",
-    ])
 
 
 def _is_greeting(message):
@@ -996,9 +1025,7 @@ def summary():
     publication_summary = (data.get("publicationSummary") or "").strip()
 
     pathway_lines = "\n".join([f"- {name}: {score:+.3f}" for name, score in top_pathways]) or "none"
-    annotation_summary_text = "\n".join(f"- {x}" for x in annotation_summary) if annotation_summary else "none"
-    plot_conclusions_text = "\n".join(f"- {x}" for x in plot_conclusions) if plot_conclusions else "none"
-    publication_summary_text = publication_summary if publication_summary else "none"
+    publication_summary_text = _shorten_text(publication_summary, 3500) if publication_summary else "none"
 
     prompt = f"""
 You are a biomedical research assistant interpreting Independent Component Analysis (ICA) results from gene expression data.
@@ -1007,45 +1034,25 @@ Component: {ic}
 Threshold: {threshold}
 Related gene: {gene}
 
-Enrichment plot available: {"yes" if has_enrichment else "no"}
-Sample annotation plots: {", ".join(annotation_names) if annotation_names else "none"}
-
 Top pathway enrichments:
 {pathway_lines}
-
-Structured plot conclusions:
-{plot_conclusions_text}
-
-Sample annotation evidence:
-{annotation_summary_text}
 
 Publication-based literature summary:
 {publication_summary_text}
 
-Write a detailed but careful overall judgement for this IC.
-
-Required format:
-- Write exactly 5 bullet points.
-- Each bullet must be 1-2 complete sentences.
-- Do not write a single short paragraph.
-- Do not stop after only describing the top pathway.
-
-Cover these five ideas, one per bullet:
-- Most likely biological interpretation of this IC.
-- Strongest pathway signals and their direction.
-- Sample-level annotation patterns, including subtype, grade, stage, tumor type, age, recurrence, or survival when available.
-- Related gene and publication summary when evidence is available.
-- Cautious conclusion, including whether the evidence is strong, moderate, weak, or mostly descriptive.
+Write one concise overall biological judgement of 80-140 words.
 
 Rules:
-- Only make claims supported by the provided pathway, annotation, plot, or publication evidence.
-- If publication evidence is unavailable, say that literature support was not available in this run.
-- If clinical subgroup evidence is descriptive rather than causal, say so clearly.
-- Be specific and avoid generic filler.
-- Use '-' bullets only.
+- Synthesize the pathways into a coherent biological program; do not merely list or rank them.
+- Positive scores indicate pathway activation and negative scores indicate suppression.
+- When MYC targets, E2F targets, and mTORC1 signaling are positively enriched together, explain their combined implication for proliferation, cell-cycle progression, anabolic growth, and potentially aggressive tumor behavior.
+- Use literature only when it directly supports the pathway-level interpretation.
+- Do not list paper titles, authors, abstracts, scores, percentages, sample subtypes, grades, stages, ages, recurrence, survival, or other plot conclusions.
+- Do not repeat information already shown in the Plot Conclusions panel.
+- State the confidence carefully and make clear that the interpretation is associative, not causal.
+- Write a single cohesive paragraph with no bullets or headings.
 
 ASSISTANT ANSWER:
--
 """.strip()
 
     try:
@@ -1072,7 +1079,8 @@ ASSISTANT ANSWER:
             after_marker = reply.rsplit(marker, 1)[-1].strip()
             if after_marker:
                 reply = after_marker
-        if _count_summary_items(reply) < 3:
+        reply = re.sub(r"^\s*[-•]\s*", "", reply).strip()
+        if not _is_valid_overall_judgement(reply):
             reply = _build_structured_judgement(
                 ic,
                 gene,
