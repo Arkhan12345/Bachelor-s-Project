@@ -60,7 +60,7 @@ After this, you will normally only need `module load` + `conda activate`.
 
 ### Step 1 — Request GPU resources
 ```bash
-srun --gres=gpu:1 --mem=32G --cpus-per-task=4 --time=03:00:00 --pty bash
+srun --gres=gpu:1 --mem=32G --cpus-per-task=4 --time=05:00:00 --pty bash
 ```
 
 Change values accordingly.
@@ -135,7 +135,7 @@ Open a new terminal on your **computer** and run:
 ssh -N -L 5000:<COMPUTE_NODE>:5000 -L 8000:<COMPUTE_NODE>:8000 s5068290@<CLUSTER_NODE>
 ```
 
-ssh -N -L 15000:a100gpu3:5000 -L 18000:a100gpu3:8000 s5068290@login1.hb.hpc.rug.nl
+ssh -N -L 15000:a100gpu4:5000 -L 18000:a100gpu4:8000 s5068290@login1.hb.hpc.rug.nl
 
 Replace `<COMPUTE_NODE>` with the node you got in Step 1 (e.g. `a100gpu6`).
 Replace `<CLUSTER_NODE>` with the cluster you used. (e.g. `interactive1.hb.hpc.rug.nl`)

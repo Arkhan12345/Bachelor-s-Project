@@ -1,12 +1,15 @@
+import os
 import time
 from typing import List, Dict
 import xml.etree.ElementTree as ET
 
 import requests  # type: ignore
+import jinja2  # type: ignore
 from transformers import AutoTokenizer, AutoModelForCausalLM  # type: ignore
 import torch  # type: ignore
 
-MODEL_NAME = "BioMistral/BioMistral-7B"
+MODEL_NAME = os.environ.get("MODEL_NAME", "BioMistral/BioMistral-7B")
+MAX_INPUT_TOKENS = int(os.environ.get("MAX_INPUT_TOKENS", "4096"))
 
 
 def _fetch_pubmed_abstracts(pmids: List[str]) -> Dict[str, str]:
@@ -105,48 +108,144 @@ def load_model():   #common pattern to load model
     print(f"Loading BioMistral model on {device}")
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)   #converts text, numbers and back
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    if device.type == "cuda":
+        model_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    else:
+        model_dtype = torch.float32
+
     model = AutoModelForCausalLM.from_pretrained(           #from_pretrained - downloads and loads the model
         MODEL_NAME,
-        dtype=torch.float32,    #use float32
+        torch_dtype=model_dtype,
+        low_cpu_mem_usage=True,
     )
     print("Model loaded!")
 
     model.to(device)   #move model to GPU if available
+    model.eval()
     return tokenizer, model, device
 
 
-def biomistral_chat(tokenizer, model, device, prompt: str, max_new_tokens: int = 200, temperature: float = 0.7, top_p: float = 0.9) -> str:
-    system_prompt = (
-        "You are a medical research assistant. "
-        "Explain concepts clearly. Do not provide diagnosis or personal medical advice."
-    )
+def _fold_system_message(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """Fallback for older Mistral templates that do not accept a system role."""
+    system_parts = [
+        str(message.get("content") or "").strip()
+        for message in messages
+        if message.get("role") == "system" and message.get("content")
+    ]
+    chat_messages = [
+        {"role": message.get("role"), "content": str(message.get("content") or "")}
+        for message in messages
+        if message.get("role") in {"user", "assistant"}
+    ]
+    if system_parts:
+        system_text = "\n\n".join(system_parts)
+        if chat_messages and chat_messages[0]["role"] == "user":
+            chat_messages[0]["content"] = (
+                f"{system_text}\n\nUser request:\n{chat_messages[0]['content']}"
+            )
+        else:
+            chat_messages.insert(0, {"role": "user", "content": system_text})
+    return chat_messages
 
-    """     system_prompt = (
-    "You are a biomedical research assistant.\n"
-    "You are interpreting Independent Component Analysis (ICA) results "
-    "from gene expression data.\n"
-    "Explain biological meaning of components and pathways clearly.\n"
-    "Do NOT diagnose or give medical advice."
-    ) """
+
+def _tokenize_chat(tokenizer, messages: List[Dict[str, str]], device):
+    old_truncation_side = getattr(tokenizer, "truncation_side", "right")
+    tokenizer.truncation_side = "left"
+    try:
+        try:
+            inputs = tokenizer.apply_chat_template(
+                messages,
+                add_generation_prompt=True,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+                truncation=True,
+                max_length=MAX_INPUT_TOKENS,
+            )
+        except (ValueError, TypeError, jinja2.exceptions.TemplateError):
+            inputs = tokenizer.apply_chat_template(
+                _fold_system_message(messages),
+                add_generation_prompt=True,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+                truncation=True,
+                max_length=MAX_INPUT_TOKENS,
+            )
+    finally:
+        tokenizer.truncation_side = old_truncation_side
+    return inputs.to(device)
 
 
-    full_prompt = f"{system_prompt}\n\nUser:\n{prompt}\n\nAssistant:\n"
+def biomistral_generate_messages(
+    tokenizer,
+    model,
+    device,
+    messages: List[Dict[str, str]],
+    max_new_tokens: int = 256,
+    temperature: float = 0.2,
+    top_p: float = 0.9,
+) -> str:
+    clean_messages = [
+        {
+            "role": str(message.get("role") or "").strip(),
+            "content": str(message.get("content") or "").strip(),
+        }
+        for message in (messages or [])
+        if message.get("role") in {"system", "user", "assistant"}
+        and str(message.get("content") or "").strip()
+    ]
+    if not clean_messages or clean_messages[-1]["role"] != "user":
+        return ""
 
-    inputs = tokenizer(full_prompt, return_tensors="pt", truncation=True, max_length=4096).to(device)
+    inputs = _tokenize_chat(tokenizer, clean_messages, device)
+    do_sample = temperature > 0
 
     with torch.no_grad():
+        generation_args = {
+            "max_new_tokens": max_new_tokens,
+            "do_sample": do_sample,
+            "eos_token_id": tokenizer.eos_token_id,
+            "pad_token_id": tokenizer.pad_token_id,
+        }
+        if do_sample:
+            generation_args.update(
+                temperature=max(temperature, 1e-5),
+                top_p=top_p,
+            )
         output_ids = model.generate(
             **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-            eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.eos_token_id,
+            **generation_args,
         )
 
     new_tokens = output_ids[0, inputs["input_ids"].shape[1]:]
     return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+
+def biomistral_chat(tokenizer, model, device, prompt: str, max_new_tokens: int = 200, temperature: float = 0.2, top_p: float = 0.9) -> str:
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a helpful medical research assistant. Explain concepts "
+                "clearly. Do not provide diagnosis or personal medical advice."
+            ),
+        },
+        {"role": "user", "content": prompt},
+    ]
+    return biomistral_generate_messages(
+        tokenizer,
+        model,
+        device,
+        messages,
+        max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        top_p=top_p,
+    )
+
 
 def biomistral_generate_raw(
     tokenizer,
@@ -167,7 +266,7 @@ def biomistral_generate_raw(
 
     old_truncation_side = getattr(tokenizer, "truncation_side", "right")
     tokenizer.truncation_side = "left"
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=4096).to(device)
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_INPUT_TOKENS).to(device)
     tokenizer.truncation_side = old_truncation_side
 
     with torch.no_grad():

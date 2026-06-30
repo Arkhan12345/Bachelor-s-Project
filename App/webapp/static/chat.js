@@ -98,6 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
               doi: p.doi || ""
             }))
           : [];
+        const publicationCount = Array.isArray(window.publicationHits)
+          ? window.publicationHits.length
+          : 0;
 
         const resp = await fetch("/chat", {
           method: "POST",
@@ -113,7 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
               annotationSummary,
               plotConclusions,
               publicationSummary: window.publicationSummaryText || "",
-              publicationHits
+              publicationHits,
+              publicationCount
             }
           })
         });
