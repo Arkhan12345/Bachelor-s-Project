@@ -19,3 +19,6 @@ env/
 
 # Generated logs
 *.log
+Bachelor-s-Project/
+__pycache__/
+*.py[cod]
