@@ -165,7 +165,10 @@ def biomistral_generate_raw(
     if not prompt:
         return ""
 
+    old_truncation_side = getattr(tokenizer, "truncation_side", "right")
+    tokenizer.truncation_side = "left"
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=4096).to(device)
+    tokenizer.truncation_side = old_truncation_side
 
     with torch.no_grad():
         start = time.time()

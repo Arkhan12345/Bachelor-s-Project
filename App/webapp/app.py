@@ -736,6 +736,44 @@ def _answer_direct_chat_question(message, top_pathways, plot_conclusions, annota
             return _format_publication_context(publication_hits, max_papers=5)
         return "I do not see any loaded publication context for this IC yet."
 
+    if top_pathways and (
+        (
+            "pathway" in question
+            and any(word in question for word in (
+                "support", "supports", "signal", "signals", "list", "which", "what"
+            ))
+        )
+        or any(word in question for word in (
+            "why", "interpret", "interpreted", "growth", "promoting", "suggest", "meaning"
+        ))
+    ):
+        pathway_bits = []
+        names = [str(name).upper() for name, _ in top_pathways]
+
+        for name, score in top_pathways[:5]:
+            score = _as_float(score)
+            direction = "positive" if score > 0 else "negative"
+            pathway_bits.append(f"{name} ({score:+.3f}, {direction})")
+
+        explanations = []
+        if any("MYC_TARGETS" in n for n in names):
+            explanations.append("MYC target enrichment suggests increased growth-related transcription")
+        if any("E2F_TARGETS" in n for n in names):
+            explanations.append("E2F target enrichment supports cell-cycle progression and proliferation")
+        if any("MTORC1_SIGNALING" in n for n in names):
+            explanations.append("mTORC1 signaling supports anabolic growth and protein synthesis")
+        if any("HYPOXIA" in n for n in names):
+            explanations.append("hypoxia suggests adaptation to tumor stress")
+
+        if explanations:
+            return (
+                f"The main pathway signals are: {'; '.join(pathway_bits)}. "
+                f"Together, {'; '.join(explanations)}. "
+                f"This supports a growth-related, hypothesis-generating interpretation of this component."
+            )
+
+        return f"The main pathway signals are: {'; '.join(pathway_bits)}."
+
     if "strongest" in question and "pathway" in question and top_pathways:
         name, score = top_pathways[0]
         score = _as_float(score)
@@ -762,30 +800,41 @@ def _normalize_answer_text(text):
 
 
 def _build_chat_continuation(ic, top_pathways, plot_conclusions, annotation_summary, publication_summary):
-    bits = []
-    if len(top_pathways or []) > 1:
+    if top_pathways:
         pathway_bits = []
-        for name, score in top_pathways[1:3]:
+        names = [str(name).upper() for name, _ in top_pathways]
+
+        for name, score in top_pathways[:5]:
             score = _as_float(score)
             direction = "positive" if score > 0 else "negative"
             pathway_bits.append(f"{name} ({score:+.3f}, {direction})")
-        bits.append("Another angle is the secondary pathway signal: " + "; ".join(pathway_bits) + ".")
 
-    sample_lines = [
-        line for line in _context_lines(plot_conclusions)
-        if not line.lower().startswith("top enriched pathway")
-    ]
-    if not sample_lines:
-        sample_lines = _context_lines(annotation_summary)
+        explanation = []
+        if any("MYC_TARGETS" in n for n in names):
+            explanation.append("MYC target enrichment suggests growth-related transcriptional activity")
+        if any("E2F_TARGETS" in n for n in names):
+            explanation.append("E2F target enrichment supports cell-cycle progression and proliferation")
+        if any("MTORC1_SIGNALING" in n for n in names):
+            explanation.append("mTORC1 signaling points to anabolic growth and protein synthesis")
+        if any("HYPOXIA" in n for n in names):
+            explanation.append("hypoxia suggests adaptation to tumor stress")
+
+        if explanation:
+            return (
+                f"For {ic}, the main pathway evidence is: "
+                + "; ".join(pathway_bits)
+                + ". Biologically, "
+                + "; ".join(explanation)
+                + ". Together, these signals support a growth-promoting, hypothesis-generating interpretation."
+            )
+
+        return f"For {ic}, the strongest pathway signals are: " + "; ".join(pathway_bits) + "."
+
+    sample_lines = _context_lines(plot_conclusions) + _context_lines(annotation_summary)
     if sample_lines:
-        bits.append("On the sample side, " + _shorten_text(sample_lines[0], 220))
+        return "The available sample evidence suggests: " + _shorten_text(sample_lines[0], 300)
 
-    if publication_summary:
-        bits.append("The loaded publication context adds: " + _shorten_text(publication_summary, 420))
-
-    if bits:
-        return " ".join(bits[:2])
-    return f"I do not have much more context for {ic} beyond the pathway list shown on this page."
+    return f"I do not have enough pathway or sample context to answer confidently for {ic}."
 
 
 @app.route("/")
@@ -1129,8 +1178,8 @@ def chat():
     pathway_lines = "\n".join([f"- {name}: {score:+.3f}" for name, score in top_pathways]) or "none"
     annotation_summary_text = "\n".join(f"- {x}" for x in annotation_summary) if annotation_summary else "none"
     plot_conclusions_text = "\n".join(f"- {x}" for x in plot_conclusions) if plot_conclusions else "none"
-    publication_summary_text = publication_summary if publication_summary else "none"
-    publication_lines = _format_publication_context(publication_hits)
+    publication_summary_text = _shorten_text(publication_summary, 900) if publication_summary else "none"
+    publication_lines = _format_publication_context(publication_hits, max_papers=3)
     previous_assistant = _last_assistant_message(history)
     is_vague_followup = _is_vague_followup(user_msg)
 
