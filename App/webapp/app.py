@@ -1198,7 +1198,8 @@ Write one concise overall biological judgement of 80-140 words.
 
 Rules:
 - Synthesize the pathways into a coherent biological program; do not merely list or rank them.
-- Positive scores indicate pathway activation and negative scores indicate suppression.
+- Positive and negative scores indicate enrichment toward the positive and negative sides of the component,
+respectively; do not interpret them as pathway activation or suppression without additional evidence.
 - When MYC targets, E2F targets, and mTORC1 signaling are positively enriched together, explain their combined implication for proliferation, cell-cycle progression, anabolic growth, and potentially aggressive tumor behavior.
 - Use literature only when it directly supports the pathway-level interpretation.
 - Do not list paper titles, authors, abstracts, scores, percentages, sample subtypes, grades, stages, ages, recurrence, survival, or other plot conclusions.
