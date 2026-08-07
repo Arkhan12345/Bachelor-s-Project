@@ -132,13 +132,12 @@ ss -tulpn | grep ':5000'
 Open a new terminal on your **computer** and run:
 
 ```bash
-ssh -N -L 5000:<COMPUTE_NODE>:5000 -L 8000:<COMPUTE_NODE>:8000 s5068290@<CLUSTER_NODE>
+ssh -N -L 5000:<COMPUTE_NODE>:5000 -L 8000:<COMPUTE_NODE>:8000 s/p_number@<CLUSTER_NODE>
 ```
 
-ssh -N -L 15000:a100gpu4:5000 -L 18000:a100gpu4:8000 s5068290@login1.hb.hpc.rug.nl
-
 Replace `<COMPUTE_NODE>` with the node you got in Step 1 (e.g. `a100gpu6`).
-Replace `<CLUSTER_NODE>` with the cluster you used. (e.g. `interactive1.hb.hpc.rug.nl`)
+Replace `<CLUSTER_NODE>` with the cluster you used. (e.g. `interactive1.hb.hpc.rug.nl`).
+Replace `<s/p_number>` with your university student/professor number.
 
 **Do not run multiple `ssh -L ...` commands.** You only need **one** tunnel from your PC.
 
